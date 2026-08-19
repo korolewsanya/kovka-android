@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.kovka">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher_foreground"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_foreground"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Kovka"
+        android:usesCleartextTraffic="true">
+        <activity
+            android:name=".SaveImgActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SelectAllImgFromServerActivity2"
+            android:exported="false" />
+        <activity
+            android:name=".SelectAllImgFromServerActivity"
+            android:exported="false" />
+        <activity
+            android:name=".FullScreenImageActivity"
+            android:exported="false" />
+        <activity
+            android:name=".GiveTzActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".ManagerZadActivity"
+            android:exported="false" />
+        <activity
+            android:name=".OtOtherSpecialistsSaveActivity"
+            android:exported="false" />
+        <activity
+            android:name=".OtOtherSpecialistsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".OtherSpecialistsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ImgChDelActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SelectImgFromServerActivity"
+            android:exported="false" />
+        <activity
+            android:name=".UploadImgToServerActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ZakazDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ZakazForDizActivity"
+            android:exported="false" />
+        <activity
+            android:name=".FinUprActivity"
+            android:exported="false" />
+        <activity
+            android:name=".DostupChDelActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".DostupSaveActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".WokersChDelActivity"
+            android:exported="false" />
+        <activity
+            android:name=".WokersSaveActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ZpChDelActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".ZpSaveActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".RashodChDelActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".RashodSaveActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".MaterSaveActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".MaterChDelActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".FinSaveActivity"
+            android:exported="false" />
+        <activity
+            android:name=".FinChDelActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ZakazSaveActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ZakazChDelActivity"
+            android:exported="false" />
+        <activity
+            android:name=".DostupActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".WorkingProcessActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".WokersActivity"
+            android:exported="false" />
+        <activity
+            android:name=".FinActivity"
+            android:exported="false" />
+        <activity
+            android:name=".RashodActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".ZpActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".MaterActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".ZakazActivity"
+            android:exported="false" />
+        <activity
+            android:name=".OtDizChDelActivity"
+            android:exported="false" />
+        <activity
+            android:name=".OtDizActivity"
+            android:exported="false" />
+        <activity
+            android:name=".OtDizSaveActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MenedgerActivity"
+            android:exported="false" />
+        <activity
+            android:name=".DizActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AdminActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".VhodActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

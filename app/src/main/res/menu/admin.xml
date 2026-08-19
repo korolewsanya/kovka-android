@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:title="Загрузка изображений"
+        android:id="@+id/img"/>
+    <item android:title="Изделия"
+        android:id="@+id/img2"/>
+    <item android:title="Все изображения"
+        android:id="@+id/img3"/>
+</menu>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ManagerZadActivity">
+
+    <TableRow >
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/zakaz"
+            android:layout_weight="0.5"
+            android:text="Изображения"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/zakaz"
+            android:layout_marginTop="5dp"
+            android:layout_marginLeft="5dp"
+            android:onClick="zakaz"/>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/otchet"
+            android:layout_weight="0.5"
+            android:text="Рабочий процесс"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/dostup"
+            android:layout_marginTop="5dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
+            android:onClick="otchet"/>
+    </TableRow>
+
+    <TableRow>
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/mater"
+            android:layout_weight="0.5"
+            android:text="Материалы"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/mater"
+            android:layout_marginTop="5dp"
+            android:layout_marginLeft="5dp"
+            android:onClick="mater"/>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/rashod"
+            android:layout_weight="0.5"
+            android:text="Прочие расходы"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/rashod"
+            android:layout_marginTop="5dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
+            android:onClick="rashod"/>
+    </TableRow>
+</TableLayout>
