@@ -71,7 +71,7 @@
 ### 🔗 Ссылки
 
 - 📱 **Google Play:** [ссылка на приложение](https://play.google.com/store/apps/details?id=ваш.package)
-- 📂 **GitHub (backend PHP):** [korolewsanya/kovka-php](https://github.com/korolewsanya/kovka)
+- 📂 **GitHub (backend PHP):** https://github.com/korolewsanya/kovka
 - 🌐 **Сайт проекта:** [ваш-домен.ru](https://ваш-домен.ru)
 
 ---
