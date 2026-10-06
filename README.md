@@ -46,11 +46,12 @@
 
 | Главная | Заказы | Изделия |
 | :---: | :---: | :---: |
-| <img src="screenshots/Главная.png" width="200"> | <img src="screenshots/Заказы.png" width="200"> | <img src="screenshots/Изделия.png" width="200"> |
+| <img src="screenshots/App/Главная.png" width="200"> | <img src="screenshots/App/Заказы.png" width="200"> | <img src="screenshots/App/Изделия.png" width="200"> |
 | **Редактирование заказа** | **Отчеты** | **Рабочий процесс** |
-| <img src="screenshots/ЗаказыРедактирование.png" width="200"> | <img src="screenshots/Отчеты.png" width="200"> | <img src="screenshots/Рабочий процесс.png" width="200"> |
+| <img src="screenshots/App/ЗаказыРедактирование.png" width="200"> | <img src="screenshots/App/Отчеты.png" width="200"> | <img src="screenshots/App/Рабочий процесс.png" width="200"> |
 | **Сотрудники** | **Финансы** | |
-| <img src="screenshots/Сотрудники.png" width="200"> | <img src="screenshots/Финансы.png" width="200"> | |
+| <img src="screenshots/App/Сотрудники.png" width="200"> | <img src="screenshots/App/Финансы.png" width="200"> | |
+
 
 </details>
 
