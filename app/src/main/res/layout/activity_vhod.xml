@@ -4,34 +4,57 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:padding="20dp"
+    android:gravity="center_horizontal"
     tools:context=".VhodActivity">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:textSize="20dp"
+        android:textSize="20sp"
         android:text="Введите код доступа"
+        android:layout_marginBottom="20dp"
         android:textColor="@android:color/holo_red_dark"/>
 
     <EditText
         android:id="@+id/etVhod"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="****"
-        android:layout_gravity="center"
-        android:layout_margin="10dp"/>
+        android:inputType="text"
+        android:layout_marginBottom="20dp"/>
+
+    <!-- БЛОК СОГЛАСИЯ -->
+    <CheckBox
+        android:id="@+id/cbAgree"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Я соглашаюсь с политикой конфиденциальности"
+        android:layout_marginBottom="10dp"/>
+
+    <!-- Кликабельный текст для перехода на политику -->
+    <TextView
+        android:id="@+id/tvPrivacyLink"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Читать политику конфиденциальности"
+        android:textColor="#0000EE"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="20dp"/>
+
     <androidx.appcompat.widget.AppCompatButton
-        android:layout_width="wrap_content"
+        android:id="@+id/btnLogin"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Войти"
-        android:onClick="vhod"
-        android:layout_gravity="center"
         android:background="@drawable/button_vhod"/>
+
     <TextView
         android:id="@+id/tv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
+        android:layout_marginTop="20dp"
         android:gravity="center"/>
 </LinearLayout>

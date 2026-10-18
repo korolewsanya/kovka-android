@@ -1,12 +1,15 @@
 package com.example.kovka;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatButton;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 public class VhodActivity extends AppCompatActivity {
-    private static final String JSON_URL = Config.API_BASE + "vhodApp.php";// UTF-8
+    private static final String JSON_URL = Config.API_BASE + "vhodApp.php"; // UTF-8
 
     ArrayList<JSONObject> infoList;
     TextView textView;
@@ -50,17 +53,37 @@ public class VhodActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_vhod);
 
-        textView = (TextView) findViewById(R.id.tv);
-        editText = (EditText) findViewById(R.id.etVhod);
+        textView = findViewById(R.id.tv);
+        editText = findViewById(R.id.etVhod);
+
+        // Привязка кнопки входа к методу vhod()
+        AppCompatButton btnLogin = findViewById(R.id.btnLogin);
+        btnLogin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                vhod(v);
+            }
+        });
+
+        // Обработка клика по ссылке на политику конфиденциальности
+        TextView tvPrivacyLink = findViewById(R.id.tvPrivacyLink);
+        tvPrivacyLink.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Открываем ссылку на политику во внешнем браузере
+                String privacyUrl = Config.SITE_BASE + "privacy.php";
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(privacyUrl));
+                startActivity(browserIntent);
+            }
+        });
 
         loadJSONFromURL(JSON_URL);
     }
 
     private void loadJSONFromURL(String url) {
-        // ПРОВЕРКА 1: Если интернета нет - показываем сообщение и выходим из метода
         if (!NetworkUtils.isNetworkAvailable(this)) {
             Toast.makeText(this, "Нет подключения к интернету", Toast.LENGTH_LONG).show();
-            return; // ПРЕРЫВАЕМ ВЫПОЛНЕНИЕ, НЕ ДЕЛАЕМ ЗАПРОС
+            return;
         }
 
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
@@ -68,7 +91,6 @@ public class VhodActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(String response) {
                         try {
-                            // ПРОВЕРКА 2: Конвертируем в UTF-8 для корректного отображения
                             String utf8Response = EncodingToUTF8(response);
                             if (utf8Response == null) {
                                 Toast.makeText(VhodActivity.this, "Ошибка обработки данных", Toast.LENGTH_SHORT).show();
@@ -80,7 +102,6 @@ public class VhodActivity extends AppCompatActivity {
                             ArrayList<JSONObject> listItems = getArrayListFromJSONArray(jsonArray);
                             infoList = listItems;
 
-                            // ПРОВЕРКА 3: Убеждаемся, что массив содержит достаточно элементов
                             if (infoList.size() >= 6) {
                                 String admin = infoList.get(0).toString();
                                 String diz = infoList.get(1).toString();
@@ -108,15 +129,12 @@ public class VhodActivity extends AppCompatActivity {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // ПРОВЕРКА 4: Обработка ошибки через NetworkUtils (без изменения сообщения)
                         String errorMessage = NetworkUtils.getErrorMessage(error);
                         Toast.makeText(getApplicationContext(), errorMessage, Toast.LENGTH_SHORT).show();
                     }
                 });
 
-        // ПРОВЕРКА 5: Настройка таймаута через NetworkUtils (чтобы запрос не висел вечно)
         NetworkUtils.configureTimeout(stringRequest);
-
         RequestQueue requestQueue = Volley.newRequestQueue(this);
         requestQueue.add(stringRequest);
     }
@@ -147,7 +165,16 @@ public class VhodActivity extends AppCompatActivity {
     }
 
     public void vhod(View view) {
-        // ПРОВЕРКА 6: Защита от NullPointerException - проверяем, загрузились ли данные
+        // === ПРОВЕРКА ЧЕКБОКСА СОГЛАСИЯ ===
+        CheckBox cbAgree = findViewById(R.id.cbAgree);
+        if (!cbAgree.isChecked()) {
+            textView.setText("!!!   Необходимо согласие с политикой конфиденциальности   !!!");
+            textView.setTextColor(Color.RED);
+            return; // Прерываем выполнение, если галочка не стоит
+        }
+        // ===================================
+
+        // Защита от NullPointerException - проверяем, загрузились ли данные
         if (personAdmin == null || personDiz == null || personSvar == null ||
                 personMenedger == null || personColor == null || personCar == null) {
             textView.setText("Проверьте настройки соединения и перезапустите приложение");
@@ -155,34 +182,26 @@ public class VhodActivity extends AppCompatActivity {
             return;
         }
 
-        // ПРОВЕРКА 7: Защита от NullPointerException - проверяем cod на null
-        String admin = personAdmin.cod != null ? personAdmin.cod : "";
-        String admin2 = admin.trim();
-        String diz = personDiz.cod != null ? personDiz.cod : "";
-        String diz2 = diz.trim();
-        String svar = personSvar.cod != null ? personSvar.cod : "";
-        String svar2 = svar.trim();
-        String menedger = personMenedger.cod != null ? personMenedger.cod : "";
-        String menedger2 = menedger.trim();
-        String color = personColor.cod != null ? personColor.cod : "";
-        String color2 = color.trim();
-        String car = personCar.cod != null ? personCar.cod : "";
-        String car2 = car.trim();
+        // Защита от NullPointerException - проверяем cod на null
+        String admin2 = personAdmin.cod != null ? personAdmin.cod.trim() : "";
+        String diz2 = personDiz.cod != null ? personDiz.cod.trim() : "";
+        String svar2 = personSvar.cod != null ? personSvar.cod.trim() : "";
+        String menedger2 = personMenedger.cod != null ? personMenedger.cod.trim() : "";
+        String color2 = personColor.cod != null ? personColor.cod.trim() : "";
+        String car2 = personCar.cod != null ? personCar.cod.trim() : "";
 
-        String et = editText.getText().toString();
-        String et2 = et.trim();
+        String et2 = editText.getText().toString().trim();
 
-        // ПРОВЕРКА 8: Проверка на пустой ввод
+        // Проверка на пустой ввод
         if (et2.isEmpty()) {
             textView.setText("!!!   Введите код доступа   !!!");
             textView.setTextColor(Color.RED);
             return;
         }
 
-        // ЛОГИКА ОСТАЛАСЬ ТОЙ ЖЕ, ТОЛЬКО ДОБАВЛЕНЫ ПРОВЕРКИ
-        boolean accessGranted = false; // Флаг для отслеживания успешного входа
+        boolean accessGranted = false;
 
-        if (new String(admin2).equals(et2)) {
+        if (admin2.equals(et2)) {
             cod1 = editText.getText().toString();
             addDataToDatabase(cod1);
             Intent intent = new Intent(this, AdminActivity.class);
@@ -191,7 +210,7 @@ public class VhodActivity extends AppCompatActivity {
             accessGranted = true;
         }
 
-        if (!accessGranted && new String(diz2).equals(et2)) {
+        if (!accessGranted && diz2.equals(et2)) {
             cod1 = editText.getText().toString();
             addDataToDatabase(cod1);
             Intent intent = new Intent(this, DizActivity.class);
@@ -200,7 +219,7 @@ public class VhodActivity extends AppCompatActivity {
             accessGranted = true;
         }
 
-        if (!accessGranted && new String(svar2).equals(et2)) {
+        if (!accessGranted && svar2.equals(et2)) {
             cod1 = editText.getText().toString();
             addDataToDatabase(cod1);
             Intent intent = new Intent(this, OtherSpecialistsActivity.class);
@@ -209,7 +228,7 @@ public class VhodActivity extends AppCompatActivity {
             accessGranted = true;
         }
 
-        if (!accessGranted && new String(menedger2).equals(et2)) {
+        if (!accessGranted && menedger2.equals(et2)) {
             cod1 = editText.getText().toString();
             addDataToDatabase(cod1);
             Intent intent = new Intent(this, MenedgerActivity.class);
@@ -218,7 +237,7 @@ public class VhodActivity extends AppCompatActivity {
             accessGranted = true;
         }
 
-        if (!accessGranted && new String(color2).equals(et2)) {
+        if (!accessGranted && color2.equals(et2)) {
             cod1 = editText.getText().toString();
             addDataToDatabase(cod1);
             Intent intent = new Intent(this, OtherSpecialistsActivity.class);
@@ -227,7 +246,7 @@ public class VhodActivity extends AppCompatActivity {
             accessGranted = true;
         }
 
-        if (!accessGranted && new String(car2).equals(et2)) {
+        if (!accessGranted && car2.equals(et2)) {
             cod1 = editText.getText().toString();
             addDataToDatabase(cod1);
             Intent intent = new Intent(this, OtherSpecialistsActivity.class);
@@ -242,18 +261,13 @@ public class VhodActivity extends AppCompatActivity {
         }
     }
 
-    //Метод для добавдения в БД Новые заказы
     private void addDataToDatabase(String cod1) {
-        // ПРОВЕРКА 9: Проверка интернета перед отправкой
         if (!NetworkUtils.isNetworkAvailable(this)) {
             Toast.makeText(this, "Нет подключения к интернету", Toast.LENGTH_LONG).show();
             return;
         }
 
-        // URL для размещения наших данных
         String url = Config.API_BASE + "cod.php";
-
-        // создание новой переменной для нашей очереди запросов
         RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
         StringRequest request = new StringRequest(Request.Method.POST, url,
@@ -271,9 +285,7 @@ public class VhodActivity extends AppCompatActivity {
                 new com.android.volley.Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // ПРОВЕРКА 10: Логируем ошибку, но не показываем пользователю
-                        // чтобы не смущать, так как вход уже выполнен
-                        Log.e("VhodActivity", "Ошибка при сохранении кода: " + "Ошибка соединения. Попробуйте позже.");
+                        Log.e("VhodActivity", "Ошибка при сохранении кода: Ошибка соединения.");
                     }
                 }) {
             @Override
@@ -289,9 +301,7 @@ public class VhodActivity extends AppCompatActivity {
             }
         };
 
-        // ПРОВЕРКА 11: Настройка таймаута через NetworkUtils
         NetworkUtils.configureTimeout(request);
-
         queue.add(request);
     }
 }

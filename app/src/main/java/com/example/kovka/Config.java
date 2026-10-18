@@ -6,6 +6,7 @@ public class Config {
 
     // Составные пути
     public static final String API_BASE = BASE_URL + "Kovka_CRM_Api/";
+    public static final String SITE_BASE = BASE_URL + "Kovka_Website/";
     public static final String IMG_BASE = BASE_URL + "img/";
 
     // Пути для создания, замены, удаленя
