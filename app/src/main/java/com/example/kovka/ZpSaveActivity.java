@@ -7,7 +7,6 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -30,15 +29,19 @@ import java.util.Map;
 
 public class ZpSaveActivity extends AppCompatActivity {
     private EditText date, spec, name, nachis, poluch;
-    // создание строк для хранения наших значений из полей редактирования.
     private String date1, spec1, name1, nachis1, poluch1;
-    //Вставка времени и даты
     String today = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",new Locale("ru")).format(Calendar.getInstance().getTime());
+
+    // ИЗМЕНЕНО: Добавлена переменная для кода админа
+    String adminCod;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_zp_save);
+
+        // ИЗМЕНЕНО: Получаем код из Intent
+        adminCod = getIntent().getStringExtra("admin_cod");
 
         date = findViewById(R.id.date2);
         spec = findViewById(R.id.spec2);
@@ -67,7 +70,6 @@ public class ZpSaveActivity extends AppCompatActivity {
                 nachis1 = nachis.getText().toString();
                 poluch1 = poluch.getText().toString();
 
-                // validating the text fields if empty or not.
                 if (TextUtils.isEmpty(date1)) {
                     date.setError("Пожалуйста, заполител это поле");
                 } else if (TextUtils.isEmpty(spec1)) {
@@ -80,77 +82,61 @@ public class ZpSaveActivity extends AppCompatActivity {
                     poluch.setError("Пожалуйста, заполител это поле");
                 }
                 else {
-                    // Вызов метода для добавления данных
                     addDataToDatabase(date1, spec1, name1, nachis1, poluch1);
                 }
                 return true;
         }
         return super.onOptionsItemSelected(item);
     }
-    //Метод для добавдения в БД Новые заказы
+
     private void addDataToDatabase(String date1, String spec1, String name1, String nachis1, String poluch1) {
-
-        // URL для размещения наших данных
         String url = Config.URL_CREATE + "create_zpApp.php";
-
-        // создание новой переменной для нашей очереди запросов
         RequestQueue queue = Volley.newRequestQueue(ZpSaveActivity.this);
 
-        // в строке ниже мы вызываем строку
-        // метод запроса для отправки данных в наш API
-        // здесь мы вызываем метод post.
-        StringRequest request = new StringRequest(Request.Method.POST, url, new com.android.volley.Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                Log.e("TAG", "RESPONSE IS " + response);
-                try {
-                    JSONObject jsonObject = new JSONObject(response);
-                    //  показываем тост-сообщение об успехе.
-                    Toast toast = Toast.makeText(ZpSaveActivity.this, "Добавлено", Toast.LENGTH_LONG);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
-                    toast.show();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                Intent intent = new Intent(ZpSaveActivity.this, AdminActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                startActivity(intent);
-            }
-        }, new com.android.volley.Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                // method to handle errors.
-                Toast.makeText(ZpSaveActivity.this, "Нет подключения к интернету", Toast.LENGTH_SHORT).show();
-            }
-        }) {
+        StringRequest request = new StringRequest(Request.Method.POST, url,
+                new com.android.volley.Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.e("TAG", "RESPONSE IS " + response);
+                        try {
+                            JSONObject jsonObject = new JSONObject(response);
+                            Toast toast = Toast.makeText(ZpSaveActivity.this, "Добавлено", Toast.LENGTH_LONG);
+                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            toast.show();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        Intent intent = new Intent(ZpSaveActivity.this, AdminActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                        // ИЗМЕНЕНО: Возвращаем код админа, чтобы цепочка не порвалась
+                        intent.putExtra("cod", adminCod);
+                        startActivity(intent);
+                    }
+                },
+                new com.android.volley.Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(ZpSaveActivity.this, "Нет подключения к интернету", Toast.LENGTH_SHORT).show();
+                    }
+                }) {
             @Override
             public String getBodyContentType() {
-                // поскольку мы передаем данные в виде закодированного URL
-                // поэтому мы передаем тип содержимого ниже
                 return "application/x-www-form-urlencoded; charset=UTF-8";
             }
 
             @Override
             protected Map<String, String> getParams() {
-
-                // ниже строки мы создаем карту для хранения
-                // наши значения в паре ключ-значение.
-                Map<String, String> params = new HashMap<String, String>();
-
-                // в нижней строке мы передаем наш
-                // пара ключей и значений для наших параметров.
+                Map<String, String> params = new HashMap<>();
+                // ИЗМЕНЕНО: Добавлена передача admin_cod
+                params.put("admin_cod", adminCod);
                 params.put("date", date1);
                 params.put("spec", spec1);
                 params.put("name", name1);
                 params.put("nachis", nachis1);
                 params.put("poluch", poluch1);
-
-                // наконец мы возвращаем наши параметры.
                 return params;
             }
         };
-        // ниже строки, чтобы сделать
-        //  запрос объекта json.
         queue.add(request);
     }
 }

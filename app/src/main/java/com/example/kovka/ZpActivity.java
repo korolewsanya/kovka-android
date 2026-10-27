@@ -24,22 +24,26 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-
+import java.util.HashMap;
+import java.util.Map;
 
 public class ZpActivity extends AppCompatActivity {
-    private static final String JSON_URL = Config.API_BASE + "zpApp.php";// UTF-8
+    private static final String URL = Config.API_BASE + "zpApp.php";
     ListView listView;
     ArrayList<JSONObject> infoList;
+    String adminCod; // ИЗМЕНЕНО: добавлена переменная для хранения кода админа
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_zp);
 
-        listView = (ListView) findViewById(R.id.listView);
-        loadJSONFromURL(JSON_URL);
+        // ИЗМЕНЕНО: Получаем код из Intent
+        adminCod = getIntent().getStringExtra("cod");
+
+        listView = findViewById(R.id.listView);
+        loadJSONFromURL(URL);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -58,22 +62,27 @@ public class ZpActivity extends AppCompatActivity {
                 intent.putExtra("name", name);
                 intent.putExtra("nachis", nachis);
                 intent.putExtra("poluch", poluch);
+                // ИЗМЕНЕНО: Передаем код админа в следующую активити
+                intent.putExtra("admin_cod", adminCod);
                 startActivity(intent);
             }
         });
     }
 
     private void  loadJSONFromURL(String url){
-        final ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        final ProgressBar progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(ListView.VISIBLE);
-        StringRequest stringRequest = new StringRequest(Request.Method.GET,url,
+
+        // ИЗМЕНЕНО: Сменили метод с GET на POST
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
                 new Response.Listener<String>(){
                     @Override
                     public void onResponse(String response) {
                         progressBar.setVisibility(View.INVISIBLE);
                         try {
                             JSONObject object = new JSONObject(response);
-                            JSONArray jsonArray = object.getJSONArray("mater");
+                            // ИЗМЕНЕНО: Ключ теперь "zp" (сервер отдает его)
+                            JSONArray jsonArray = object.getJSONArray("zp");
                             ArrayList<JSONObject> listItems = getArrayListFromJSONArray(jsonArray);
                             infoList = listItems;
                             ListAdapter adapter = new ZpAdapter(getApplicationContext(),R.layout.row_zp,R.id.id,listItems);
@@ -86,9 +95,18 @@ public class ZpActivity extends AppCompatActivity {
                 new Response.ErrorListener(){
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        progressBar.setVisibility(View.INVISIBLE);
                         Toast.makeText(getApplicationContext(),"Ошибка соединения. Попробуйте позже.",Toast.LENGTH_SHORT).show();
                     }
-                });
+                }) {
+            // ИЗМЕНЕНО: Передаем "cod" в теле запроса
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<>();
+                params.put("cod", adminCod);
+                return params;
+            }
+        };
         RequestQueue requestQueue = Volley.newRequestQueue(this);
         requestQueue.add(stringRequest);
     }
@@ -107,17 +125,6 @@ public class ZpActivity extends AppCompatActivity {
         return aList;
     }
 
-    public  static  String EncodingToUTF8(String response){
-        try {
-            byte[] code = response.toString().getBytes("ISO-8859-1");
-            response = new String(code, "UTF-8");
-        }catch (UnsupportedEncodingException e){
-            e.printStackTrace();
-            return null;
-        }
-        return response;
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.fin_save, menu);
@@ -130,6 +137,8 @@ public class ZpActivity extends AppCompatActivity {
         switch(id){
             case R.id.save_fin:
                 Intent intent = new Intent(this, ZpSaveActivity.class);
+                // ИЗМЕНЕНО: Передаем код админа для создания записи
+                intent.putExtra("admin_cod", adminCod);
                 startActivity(intent);
                 return true;
         }
