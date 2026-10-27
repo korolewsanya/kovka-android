@@ -24,21 +24,25 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FinUprActivity extends AppCompatActivity {
-    private static final String JSON_URL = Config.API_BASE + "finUprApp.php";// UTF-8
+    private static final String URL = Config.API_BASE + "finUprApp.php";
     ListView listView;
     ArrayList<JSONObject> infoList;
+    private String adminCod;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_fin_upr);
 
-        listView = (ListView) findViewById(R.id.listView);
-        loadJSONFromURL(JSON_URL);
+        adminCod = getIntent().getStringExtra("cod");
+
+        listView = findViewById(R.id.listView);
+        loadJSONFromURL(URL);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -48,22 +52,24 @@ public class FinUprActivity extends AppCompatActivity {
                 String dohod = infoList.get(position).optString("dohod");
                 String rashod = infoList.get(position).optString("rashod");
                 String prib = infoList.get(position).optString("prib");
-                Intent intent = new Intent(getApplicationContext(),FinChDelActivity.class);
-
+                Intent intent = new Intent(getApplicationContext(), FinChDelActivity.class);
                 intent.putExtra("nom", nom);
                 intent.putExtra("date", date);
                 intent.putExtra("dohod", dohod);
                 intent.putExtra("rashod", rashod);
                 intent.putExtra("prib", prib);
+                intent.putExtra("admin_cod", adminCod);
                 startActivity(intent);
             }
         });
     }
-    private void  loadJSONFromURL(String url){
-        final ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
+
+    private void loadJSONFromURL(String url) {
+        final ProgressBar progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(ListView.VISIBLE);
-        StringRequest stringRequest = new StringRequest(Request.Method.GET,url,
-                new Response.Listener<String>(){
+
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         progressBar.setVisibility(View.INVISIBLE);
@@ -72,46 +78,49 @@ public class FinUprActivity extends AppCompatActivity {
                             JSONArray jsonArray = object.getJSONArray("fin");
                             ArrayList<JSONObject> listItems = getArrayListFromJSONArray(jsonArray);
                             infoList = listItems;
-                            ListAdapter adapter = new FinAdapter(getApplicationContext(),R.layout.row_fin,R.id.date,listItems);
+                            ListAdapter adapter = new FinAdapter(getApplicationContext(), R.layout.row_fin, R.id.date, listItems);
                             listView.setAdapter(adapter);
-                        }catch (JSONException e){
+                        } catch (JSONException e) {
                             e.printStackTrace();
                         }
                     }
                 },
-                new Response.ErrorListener(){
+                new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(getApplicationContext(),"Ошибка соединения. Попробуйте позже.",Toast.LENGTH_SHORT).show();
+                        progressBar.setVisibility(View.INVISIBLE);
+                        Toast.makeText(getApplicationContext(), "Ошибка соединения. Попробуйте позже.", Toast.LENGTH_SHORT).show();
                     }
-                });
+                }) {
+            @Override
+            public String getBodyContentType() {
+                return "application/x-www-form-urlencoded; charset=UTF-8";
+            }
+
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<>();
+                params.put("cod", adminCod);
+                return params;
+            }
+        };
+        NetworkUtils.configureTimeout(stringRequest);
         RequestQueue requestQueue = Volley.newRequestQueue(this);
         requestQueue.add(stringRequest);
     }
 
-    private ArrayList<JSONObject> getArrayListFromJSONArray(JSONArray jsonArray){
-        ArrayList<JSONObject> aList = new ArrayList<JSONObject>();
+    private ArrayList<JSONObject> getArrayListFromJSONArray(JSONArray jsonArray) {
+        ArrayList<JSONObject> aList = new ArrayList<>();
         try {
-            if(jsonArray!= null){
-                for(int i = 0; i<jsonArray.length();i++){
+            if (jsonArray != null) {
+                for (int i = 0; i < jsonArray.length(); i++) {
                     aList.add(jsonArray.getJSONObject(i));
                 }
             }
-        }catch (JSONException js){
+        } catch (JSONException js) {
             js.printStackTrace();
         }
         return aList;
-    }
-
-    public  static  String EncodingToUTF8(String response){
-        try {
-            byte[] code = response.toString().getBytes("ISO-8859-1");
-            response = new String(code, "UTF-8");
-        }catch (UnsupportedEncodingException e){
-            e.printStackTrace();
-            return null;
-        }
-        return response;
     }
 
     @Override
@@ -123,9 +132,10 @@ public class FinUprActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        switch(id){
+        switch (id) {
             case R.id.save_fin:
                 Intent intent = new Intent(this, FinSaveActivity.class);
+                intent.putExtra("admin_cod", adminCod);
                 startActivity(intent);
                 return true;
         }

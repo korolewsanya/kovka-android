@@ -24,28 +24,27 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MaterActivity extends AppCompatActivity {
-    private static final String JSON_URL = Config.API_BASE + "materApp.php";// UTF-8
+    private static final String URL = Config.API_BASE + "materApp.php";
     ListView listView;
     ArrayList<JSONObject> infoList;
     String manager;
-    Bundle arguments;
+    String adminCod;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mater);
 
-        arguments = getIntent().getExtras();
-        if(arguments!=null) {
-            manager = arguments.get("manager").toString();
-        }
+        manager = getIntent().getStringExtra("manager");
+        adminCod = getIntent().getStringExtra("cod");
 
-        listView = (ListView) findViewById(R.id.listView);
-        loadJSONFromURL(JSON_URL);
+        listView = findViewById(R.id.listView);
+        loadJSONFromURL(URL);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -58,8 +57,8 @@ public class MaterActivity extends AppCompatActivity {
                 String ost = infoList.get(position).optString("ost");
                 String prise = infoList.get(position).optString("prise");
                 String itogo = infoList.get(position).optString("itogo");
-                Intent intent = new Intent(getApplicationContext(),MaterChDelActivity.class);
 
+                Intent intent = new Intent(getApplicationContext(), MaterChDelActivity.class);
                 intent.putExtra("id", nom);
                 intent.putExtra("date", date);
                 intent.putExtra("name", name);
@@ -68,8 +67,9 @@ public class MaterActivity extends AppCompatActivity {
                 intent.putExtra("ost", ost);
                 intent.putExtra("prise", prise);
                 intent.putExtra("itogo", itogo);
+                intent.putExtra("admin_cod", adminCod); // <-- передаем код для изменения/удаления
 
-                if(manager!=null) {
+                if (manager != null) {
                     intent.putExtra("manager", manager);
                 }
                 startActivity(intent);
@@ -77,11 +77,12 @@ public class MaterActivity extends AppCompatActivity {
         });
     }
 
-    private void  loadJSONFromURL(String url){
-        final ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
+    private void loadJSONFromURL(String url) {
+        final ProgressBar progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(ListView.VISIBLE);
-        StringRequest stringRequest = new StringRequest(Request.Method.GET,url,
-                new Response.Listener<String>(){
+
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         progressBar.setVisibility(View.INVISIBLE);
@@ -90,46 +91,48 @@ public class MaterActivity extends AppCompatActivity {
                             JSONArray jsonArray = object.getJSONArray("mater");
                             ArrayList<JSONObject> listItems = getArrayListFromJSONArray(jsonArray);
                             infoList = listItems;
-                            ListAdapter adapter = new MaterAdapter(getApplicationContext(),R.layout.row_mater,R.id.id,listItems);
+                            ListAdapter adapter = new MaterAdapter(getApplicationContext(), R.layout.row_mater, R.id.id, listItems);
                             listView.setAdapter(adapter);
-                        }catch (JSONException e){
+                        } catch (JSONException e) {
                             e.printStackTrace();
                         }
                     }
                 },
-                new Response.ErrorListener(){
+                new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(getApplicationContext(),"Ошибка соединения. Попробуйте позже.",Toast.LENGTH_SHORT).show();
+                        progressBar.setVisibility(View.INVISIBLE);
+                        Toast.makeText(getApplicationContext(), "Ошибка соединения. Попробуйте позже.", Toast.LENGTH_SHORT).show();
                     }
-                });
+                }) {
+            @Override
+            public String getBodyContentType() {
+                return "application/x-www-form-urlencoded; charset=UTF-8";
+            }
+
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<>();
+                params.put("cod", adminCod);
+                return params;
+            }
+        };
         RequestQueue requestQueue = Volley.newRequestQueue(this);
         requestQueue.add(stringRequest);
     }
 
-    private ArrayList<JSONObject> getArrayListFromJSONArray(JSONArray jsonArray){
-        ArrayList<JSONObject> aList = new ArrayList<JSONObject>();
+    private ArrayList<JSONObject> getArrayListFromJSONArray(JSONArray jsonArray) {
+        ArrayList<JSONObject> aList = new ArrayList<>();
         try {
-            if(jsonArray!= null){
-                for(int i = 0; i<jsonArray.length();i++){
+            if (jsonArray != null) {
+                for (int i = 0; i < jsonArray.length(); i++) {
                     aList.add(jsonArray.getJSONObject(i));
                 }
             }
-        }catch (JSONException js){
+        } catch (JSONException js) {
             js.printStackTrace();
         }
         return aList;
-    }
-
-    public  static  String EncodingToUTF8(String response){
-        try {
-            byte[] code = response.toString().getBytes("ISO-8859-1");
-            response = new String(code, "UTF-8");
-        }catch (UnsupportedEncodingException e){
-            e.printStackTrace();
-            return null;
-        }
-        return response;
     }
 
     @Override
@@ -141,10 +144,11 @@ public class MaterActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        switch(id){
+        switch (id) {
             case R.id.save_fin:
                 Intent intent = new Intent(this, MaterSaveActivity.class);
-                if(arguments!=null) {
+                intent.putExtra("admin_cod", adminCod); // <-- передаем код для создания
+                if (manager != null) {
                     intent.putExtra("manager", manager);
                 }
                 startActivity(intent);
