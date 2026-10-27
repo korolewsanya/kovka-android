@@ -1,22 +1,16 @@
 package com.example.kovka;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.OpenableColumns;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -29,25 +23,31 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class OtOtherSpecialistsActivity extends AppCompatActivity {
-    private static final String JSON_URL = Config.API_BASE + "ot_dizApp.php";// UTF-8
+    private static final String JSON_URL = Config.API_BASE + "ot_dizApp.php";
     ListView listView;
     ArrayList<JSONObject> infoList;
+    String cod;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ot_other_specialists);
 
-        Bundle arguments = getIntent().getExtras();
-        String cod = arguments.get("cod").toString();
+        cod = getIntent().getStringExtra("cod");
+        if (cod == null) {
+            Toast.makeText(this, "Ошибка: код не передан", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
         TextView textView = findViewById(R.id.tz);
         textView.setText("Отчёт");
-        listView = (ListView) findViewById(R.id.listView);
+        listView = findViewById(R.id.listView);
         loadJSONFromURL(JSON_URL);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -57,6 +57,7 @@ public class OtOtherSpecialistsActivity extends AppCompatActivity {
                 String tz = infoList.get(position).optString("tz");
                 String ot = infoList.get(position).optString("otchet");
                 String data = infoList.get(position).optString("date");
+                String image = infoList.get(position).optString("image");
 
                 Intent intent = new Intent(getApplicationContext(), OtDizChDelActivity.class);
                 intent.putExtra("idi", idi);
@@ -64,15 +65,18 @@ public class OtOtherSpecialistsActivity extends AppCompatActivity {
                 intent.putExtra("job", ot);
                 intent.putExtra("data", data);
                 intent.putExtra("cod", cod);
+                intent.putExtra("image", image);
                 startActivity(intent);
             }
         });
     }
 
     private void loadJSONFromURL(String url) {
-        final ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        final ProgressBar progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(ListView.VISIBLE);
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+
+        // ИЗМЕНЕНО: POST вместо GET
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -92,15 +96,24 @@ public class OtOtherSpecialistsActivity extends AppCompatActivity {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        progressBar.setVisibility(View.INVISIBLE);
                         Toast.makeText(getApplicationContext(), "Ошибка соединения. Попробуйте позже.", Toast.LENGTH_SHORT).show();
                     }
-                });
+                }) {
+            // ИЗМЕНЕНО: передаем cod
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<>();
+                params.put("cod", cod);
+                return params;
+            }
+        };
         RequestQueue requestQueue = Volley.newRequestQueue(this);
         requestQueue.add(stringRequest);
     }
 
     private ArrayList<JSONObject> getArrayListFromJSONArray(JSONArray jsonArray) {
-        ArrayList<JSONObject> aList = new ArrayList<JSONObject>();
+        ArrayList<JSONObject> aList = new ArrayList<>();
         try {
             if (jsonArray != null) {
                 for (int i = 0; i < jsonArray.length(); i++) {
@@ -112,16 +125,4 @@ public class OtOtherSpecialistsActivity extends AppCompatActivity {
         }
         return aList;
     }
-
-    public static String EncodingToUTF8(String response) {
-        try {
-            byte[] code = response.toString().getBytes("ISO-8859-1");
-            response = new String(code, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            return null;
-        }
-        return response;
-    }
 }
-

@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -18,10 +17,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
 import org.json.JSONException;
@@ -55,17 +51,23 @@ public class OtOtherSpecialistsSaveActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ot_other_specialists_save);
 
-        data = (EditText) findViewById(R.id.data);
-        tz = (EditText) findViewById(R.id.teh_zd);
-        ot = (EditText) findViewById(R.id.order);
+        data = findViewById(R.id.data);
+        tz = findViewById(R.id.teh_zd);
+        ot = findViewById(R.id.order);
 
         Intent intent = getIntent();
         String tz2 = intent.getStringExtra("tz");
         prof1 = intent.getStringExtra("prof");
         class_work1 = intent.getStringExtra("class_work");
         name1 = intent.getStringExtra("name");
-        Bundle arguments = getIntent().getExtras();
-        cod1 = arguments.get("cod").toString();
+
+        // ИЗМЕНЕНО: Безопасное получение кода
+        cod1 = intent.getStringExtra("cod");
+        if (cod1 == null) {
+            Toast.makeText(this, "Ошибка: код доступа не передан", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
         tz.setText(tz2);
         data.setText(today);
@@ -75,7 +77,7 @@ public class OtOtherSpecialistsSaveActivity extends AppCompatActivity {
         Button selectPhotoButton = findViewById(R.id.select_photo_button);
 
         selectPhotoButton.setOnClickListener(v -> {
-            // Открываем выбор изображений (только image/*)
+            // Открываем выбор изображений
             selectImageLauncher.launch("*/*");
         });
     }
@@ -115,7 +117,8 @@ public class OtOtherSpecialistsSaveActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
 
     }
-    //Метод для добавдения в БД Отчёты
+
+    //Метод для добавления в БД Отчёты
     private void addDataToDatabase(String data1, String tz1, String ot1, String cod1,
                                    String prof1, String class_work1, String name1,
                                    String image1, Uri imageUri) {
@@ -123,7 +126,7 @@ public class OtOtherSpecialistsSaveActivity extends AppCompatActivity {
         String url = Config.URL_CREATE + "create_ot_dizApp.php";
         RequestQueue queue = Volley.newRequestQueue(OtOtherSpecialistsSaveActivity.this);
 
-        // Текстовые параметры (ВСЕ ваши исходные поля)
+        // Текстовые параметры
         Map<String, String> params = new HashMap<>();
         params.put("date", data1);
         params.put("tz", tz1);
@@ -132,7 +135,7 @@ public class OtOtherSpecialistsSaveActivity extends AppCompatActivity {
         params.put("prof", prof1);
         params.put("class_work", class_work1);
         params.put("name", name1);
-        params.put("image", image1);   // <-- ваше строковое имя файла
+        params.put("image", image1);
 
         // Файл изображения (если выбран)
         Map<String, MultipartRequest.DataPart> dataParts = null;
@@ -140,12 +143,12 @@ public class OtOtherSpecialistsSaveActivity extends AppCompatActivity {
             try {
                 InputStream inputStream = getContentResolver().openInputStream(imageUri);
                 byte[] fileBytes = readBytes(inputStream);
-                String fileName = getFileName(imageUri);  // используем ваш метод
+                String fileName = getFileName(imageUri);
                 String mimeType = getContentResolver().getType(imageUri);
                 if (mimeType == null) mimeType = "image/jpeg";
 
                 dataParts = new HashMap<>();
-                // ключ "image_file" – серверный скрипт будет искать файл в $_FILES['image_file']
+                // ключ "image_file" – серверный скрипт ищет файл в $_FILES['image_file']
                 dataParts.put("image_file", new MultipartRequest.DataPart(fileBytes, fileName, mimeType));
             } catch (IOException e) {
                 e.printStackTrace();
@@ -172,7 +175,7 @@ public class OtOtherSpecialistsSaveActivity extends AppCompatActivity {
                     intent.putExtra("class_work", class_work1);
                     intent.putExtra("prof", prof1);
                     intent.putExtra("name", name1);
-                    intent.putExtra("name", image1);   // ваша строка
+                    // ИЗМЕНЕНО: Убран дубль putExtra("name", image1);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                     startActivity(intent);
                 },
@@ -195,12 +198,12 @@ public class OtOtherSpecialistsSaveActivity extends AppCompatActivity {
         }
         return byteBuffer.toByteArray();
     }
+
     /**
      * Извлекает имя файла из Uri (например, "IMG_20230501.jpg").
      */
     private String getFileName(Uri uri) {
         String name = "";
-        // Используем try-with-resources для курсора
         try (android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
             if (cursor != null && cursor.moveToFirst()) {
                 int displayNameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
@@ -212,27 +215,20 @@ public class OtOtherSpecialistsSaveActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         if (name.isEmpty()) {
-            // Запасной вариант: последний сегмент пути
             name = uri.getLastPathSegment();
             if (name == null) name = "unknown";
         }
         return name;
     }
 
-
     // Лаунчер для выбора изображения
     private final ActivityResultLauncher<String> selectImageLauncher =
             registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
                 if (uri != null) {
-                    // Отображаем выбранное изображение
                     selectedImageView.setImageURI(uri);
                     selectedImageView.setVisibility(View.VISIBLE);
-
-                    // Получаем имя файла и вставляем в EditText
                     String fileName = getFileName(uri);
                     imgEditText.setText(fileName);
-
-                    // Сохраняем URI для последующей загрузки файла
                     selectedImageUri = uri;
                 }
             });
