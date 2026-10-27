@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -53,17 +52,14 @@ public class OtDizChDelActivity extends AppCompatActivity {
         String tz2 = intent.getStringExtra("tz");
         String job2 = intent.getStringExtra("job");
         imageName = intent.getStringExtra("image");
-
-        Bundle arguments = getIntent().getExtras();
-        cod1 = arguments.getString("cod");
+        cod1 = intent.getStringExtra("cod");
 
         nom.setText(idi);
         data.setText(data2);
         tz.setText(tz2);
         otchet.setText(job2);
 
-        // Загружаем фото, если оно есть
-        if (imageName != null && !imageName.isEmpty()) {
+        if (imageName != null && !imageName.isEmpty() && !imageName.equals("нет изображения")) {
             String imageUrl = "http://192.168.1.156/Kovka_git/kovka/img/" + imageName;
             Glide.with(this)
                     .load(imageUrl)
@@ -112,15 +108,15 @@ public class OtDizChDelActivity extends AppCompatActivity {
 
     private void addDataToDatabase(String nom1, String data1, String otchet1) {
         String url = Config.URL_CHANGE + "change_ot_dizApp.php";
-
         RequestQueue queue = Volley.newRequestQueue(this);
+
         StringRequest request = new StringRequest(Request.Method.POST, url,
                 response -> {
                     Log.d("CHANGE_RESPONSE", response);
                     try {
                         JSONObject jsonObject = new JSONObject(response);
                         Toast.makeText(OtDizChDelActivity.this, "Изменения сохранены", Toast.LENGTH_LONG).show();
-                        Intent intent = new Intent(OtDizChDelActivity.this, VhodActivity.class);
+                        Intent intent = new Intent(OtDizChDelActivity.this, OtherSpecialistsActivity.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                         intent.putExtra("cod", cod1);
                         startActivity(intent);
@@ -129,10 +125,11 @@ public class OtDizChDelActivity extends AppCompatActivity {
                         e.printStackTrace();
                     }
                 },
-                error -> Toast.makeText(OtDizChDelActivity.this, "Ошибка: " + "Ошибка соединения. Попробуйте позже.", Toast.LENGTH_SHORT).show()) {
+                error -> Toast.makeText(OtDizChDelActivity.this, "Ошибка соединения", Toast.LENGTH_SHORT).show()) {
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
+                params.put("cod", cod1);
                 params.put("id", nom1);
                 params.put("date", data1);
                 params.put("otchet", otchet1);
@@ -144,15 +141,15 @@ public class OtDizChDelActivity extends AppCompatActivity {
 
     private void getCourseDetails2(String courseId) {
         String url = Config.URL_DELETE + "delete_ot_dizApp.php";
-
         RequestQueue queue = Volley.newRequestQueue(this);
+
         StringRequest request = new StringRequest(Request.Method.POST, url,
                 response -> {
                     try {
                         JSONObject jsonObject = new JSONObject(response);
                         if (!jsonObject.getBoolean("error")) {
                             Toast.makeText(OtDizChDelActivity.this, "Отчёт удалён", Toast.LENGTH_LONG).show();
-                            Intent intent = new Intent(OtDizChDelActivity.this, VhodActivity.class);
+                            Intent intent = new Intent(OtDizChDelActivity.this, OtherSpecialistsActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                             intent.putExtra("cod", cod1);
                             startActivity(intent);
@@ -165,11 +162,12 @@ public class OtDizChDelActivity extends AppCompatActivity {
                         Toast.makeText(OtDizChDelActivity.this, "Ошибка ответа сервера", Toast.LENGTH_SHORT).show();
                     }
                 },
-                error -> Toast.makeText(OtDizChDelActivity.this, "Ошибка соединения. Попробуйте позже.", Toast.LENGTH_SHORT).show()) {
+                error -> Toast.makeText(OtDizChDelActivity.this, "Ошибка соединения", Toast.LENGTH_SHORT).show()) {
 
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
+                params.put("cod", cod1);
                 params.put("id", courseId);
                 return params;
             }

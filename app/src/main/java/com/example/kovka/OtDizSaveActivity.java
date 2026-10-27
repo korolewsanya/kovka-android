@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -19,10 +18,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
 import org.json.JSONException;
@@ -46,7 +42,6 @@ public class OtDizSaveActivity extends AppCompatActivity {
 
     private EditText imgEditText;
     private ImageView selectedImageView;
-
     private Uri selectedImageUri = null;
 
     @Override
@@ -54,27 +49,32 @@ public class OtDizSaveActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ot_diz_save);
 
-        data = (EditText) findViewById(R.id.data);
-        tz = (EditText) findViewById(R.id.teh_zd);
-        ot = (EditText) findViewById(R.id.order);
+        data = findViewById(R.id.data);
+        tz = findViewById(R.id.teh_zd);
+        ot = findViewById(R.id.order);
 
         Intent intent = getIntent();
         String tz2 = intent.getStringExtra("tz");
         prof1 = intent.getStringExtra("prof");
         class_work1 = intent.getStringExtra("class_work");
         name1 = intent.getStringExtra("name");
-        Bundle arguments = getIntent().getExtras();
-        cod1 = arguments.get("cod").toString();
+        cod1 = intent.getStringExtra("cod"); // Безопасное получение
+
+        if (cod1 == null) {
+            Toast.makeText(this, "Ошибка: код доступа не передан", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
         tz.setText(tz2);
         data.setText(today);
 
-        imgEditText = (EditText) findViewById(R.id.img);
+        imgEditText = findViewById(R.id.img);
         selectedImageView = findViewById(R.id.selected_image);
         Button selectPhotoButton = findViewById(R.id.select_photo_button);
 
         selectPhotoButton.setOnClickListener(v -> {
-            // Открываем выбор изображений (только image/*)
+            // Открываем выбор изображений
             selectImageLauncher.launch("*/*");
         });
     }
@@ -102,7 +102,7 @@ public class OtDizSaveActivity extends AppCompatActivity {
                 } else if (TextUtils.isEmpty(ot1)) {
                     ot.setError("Пожалуйста, заполните это поле");
                 } else {
-                    // Обработка поля image1: если пусто или только пробелы — ставим «нет изображения»
+                    // Обработка поля image1: если пусто — ставим «нет изображения»
                     if (TextUtils.isEmpty(image1) || image1.trim().isEmpty()) {
                         image1 = "нет изображения";
                     }
@@ -114,7 +114,7 @@ public class OtDizSaveActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    //Метод для добавдения в БД Otchet
+    // Метод для добавления в БД Otchet
     private void addDataToDatabase(String data1, String tz1, String ot1, String cod1,
                                    String prof1, String class_work1, String name1,
                                    String image1, Uri imageUri) {
@@ -122,16 +122,16 @@ public class OtDizSaveActivity extends AppCompatActivity {
         String url = Config.URL_CREATE + "create_ot_dizApp.php";
         RequestQueue queue = Volley.newRequestQueue(OtDizSaveActivity.this);
 
-        // Текстовые параметры (ВСЕ ваши исходные поля)
+        // Текстовые параметры
         Map<String, String> params = new HashMap<>();
         params.put("date", data1);
         params.put("tz", tz1);
         params.put("ot", ot1);
-        params.put("cod", cod1);
-        params.put("prof", prof1);
-        params.put("class_work", class_work1);
-        params.put("name", name1);
-        params.put("image", image1);   // строковое имя файла
+        params.put("cod", cod1); // Код автора отчета
+        params.put("prof", prof1 != null ? prof1 : "");
+        params.put("class_work", class_work1 != null ? class_work1 : "");
+        params.put("name", name1 != null ? name1 : "");
+        params.put("image", image1);
 
         // Файл изображения (если выбран)
         Map<String, MultipartRequest.DataPart> dataParts = null;
@@ -139,21 +139,17 @@ public class OtDizSaveActivity extends AppCompatActivity {
             try {
                 InputStream inputStream = getContentResolver().openInputStream(imageUri);
                 byte[] fileBytes = readBytes(inputStream);
-                String fileName = getFileName(imageUri);  // используем ваш метод
+                String fileName = getFileName(imageUri);
                 String mimeType = getContentResolver().getType(imageUri);
                 if (mimeType == null) mimeType = "image/jpeg";
 
                 dataParts = new HashMap<>();
-                // ключ "image_file" – серверный скрипт будет искать файл в $_FILES['image_file']
                 dataParts.put("image_file", new MultipartRequest.DataPart(fileBytes, fileName, mimeType));
             } catch (IOException e) {
                 e.printStackTrace();
                 Toast.makeText(OtDizSaveActivity.this, "Ошибка чтения файла", Toast.LENGTH_SHORT).show();
                 return;
             }
-            Intent intent = new Intent(OtDizSaveActivity.this, OtDizActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
         }
 
         MultipartRequest request = new MultipartRequest(
@@ -168,26 +164,25 @@ public class OtDizSaveActivity extends AppCompatActivity {
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
-                    // Переход – полностью ваш исходный код
+
+                    // Возвращаемся на экран специалиста
                     Intent intent = new Intent(OtDizSaveActivity.this, OtherSpecialistsActivity.class);
                     intent.putExtra("cod", cod1);
                     intent.putExtra("class_work", class_work1);
                     intent.putExtra("prof", prof1);
                     intent.putExtra("name", name1);
-                    intent.putExtra("name", image1);   // ваша строка
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                     startActivity(intent);
+                    finish();
                 },
                 error -> {
-                    Toast.makeText(OtDizSaveActivity.this,
-                            "Нет подключения к интернету", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(OtDizSaveActivity.this, "Нет подключения к интернету", Toast.LENGTH_SHORT).show();
                 }
         );
 
         queue.add(request);
     }
 
-    // Вспомогательный метод для чтения InputStream в byte[]
     private byte[] readBytes(InputStream inputStream) throws IOException {
         ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024];
@@ -198,12 +193,8 @@ public class OtDizSaveActivity extends AppCompatActivity {
         return byteBuffer.toByteArray();
     }
 
-    /**
-     * Извлекает имя файла из Uri (например, "IMG_20230501.jpg").
-     */
     private String getFileName(Uri uri) {
         String name = "";
-        // Используем try-with-resources для курсора
         try (android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
             if (cursor != null && cursor.moveToFirst()) {
                 int displayNameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
@@ -215,27 +206,19 @@ public class OtDizSaveActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         if (name.isEmpty()) {
-            // Запасной вариант: последний сегмент пути
             name = uri.getLastPathSegment();
             if (name == null) name = "unknown";
         }
         return name;
     }
 
-
-    // Лаунчер для выбора изображения
     private final ActivityResultLauncher<String> selectImageLauncher =
             registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
                 if (uri != null) {
-                    // Отображаем выбранное изображение
                     selectedImageView.setImageURI(uri);
                     selectedImageView.setVisibility(View.VISIBLE);
-
-                    // Получаем имя файла и вставляем в EditText
                     String fileName = getFileName(uri);
                     imgEditText.setText(fileName);
-
-                    // Сохраняем URI для последующей загрузки файла
                     selectedImageUri = uri;
                 }
             });
