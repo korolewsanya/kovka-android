@@ -4,29 +4,30 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.app.AlertDialog;
-import android.os.Bundle;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
+
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import java.util.ArrayList;
 import java.util.List;
 
-
-public class SelectAllImgFromServerActivity extends AppCompatActivity implements ImageAdapter.OnImageActionListener{
+public class SelectAllImgFromServerActivity extends AppCompatActivity implements ImageAdapter.OnImageActionListener {
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
     private ImageAdapter adapter;
     private List<ImageModel> imageList = new ArrayList<>();
     private ApiService apiService;
+    private String adminCod;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_all_img_from_server);
+
+        adminCod = getIntent().getStringExtra("cod");
 
         recyclerView = findViewById(R.id.recyclerView);
         progressBar = findViewById(R.id.progressBar);
@@ -36,6 +37,7 @@ public class SelectAllImgFromServerActivity extends AppCompatActivity implements
         recyclerView.setAdapter(adapter);
 
         apiService = ApiService.getInstance(this);
+        apiService.setAdminCod(adminCod); // <-- передаем код в сервис
 
         loadImages();
     }
@@ -127,12 +129,12 @@ public class SelectAllImgFromServerActivity extends AppCompatActivity implements
             public void onSuccess(ApiResponse response) {
                 progressBar.setVisibility(ProgressBar.GONE);
                 if (response.isSuccess() && response.getNewName() != null) {
-                    ImageModel updatedImage = new ImageModel(response.getNewName(),
-                            "uploads/" + response.getNewName());
+                    // ВАЖНО: Путь должен совпадать с тем, что отдает get_images.php
+                    ImageModel updatedImage = new ImageModel(response.getNewName(), "../img/" + response.getNewName());
                     adapter.updateItem(position, updatedImage);
                     Toast.makeText(SelectAllImgFromServerActivity.this, "Переименовано", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(SelectAllImgFromServerActivity.this, "Ошибка переименования", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SelectAllImgFromServerActivity.this, "Ошибка: " + response.getError(), Toast.LENGTH_SHORT).show();
                 }
             }
 

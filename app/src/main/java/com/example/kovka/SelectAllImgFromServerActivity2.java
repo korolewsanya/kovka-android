@@ -5,8 +5,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,11 +18,15 @@ public class SelectAllImgFromServerActivity2 extends AppCompatActivity implement
     private ImageAdapter adapter;
     private List<ImageModel> imageList = new ArrayList<>();
     private ApiService apiService;
+    private String adminCod; // ИЗМЕНЕНО: переменная для кода доступа
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_all_img_from_server2);
+
+        // ИЗМЕНЕНО: Получаем код доступа из Intent
+        adminCod = getIntent().getStringExtra("cod");
 
         recyclerView = findViewById(R.id.recyclerView);
         progressBar = findViewById(R.id.progressBar);
@@ -30,6 +36,8 @@ public class SelectAllImgFromServerActivity2 extends AppCompatActivity implement
         recyclerView.setAdapter(adapter);
 
         apiService = ApiService.getInstance(this);
+        // ИЗМЕНЕНО: Передаем код доступа в сервис
+        apiService.setAdminCod(adminCod);
 
         loadImages();
     }

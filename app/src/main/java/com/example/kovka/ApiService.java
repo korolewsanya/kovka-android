@@ -1,7 +1,5 @@
 package com.example.kovka;
 
-//модель ответа
-
 import android.content.Context;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -19,6 +17,7 @@ public class ApiService {
     private static ApiService instance;
     private RequestQueue requestQueue;
     private Gson gson;
+    private String adminCod;
 
     private ApiService(Context context) {
         requestQueue = Volley.newRequestQueue(context);
@@ -30,6 +29,10 @@ public class ApiService {
             instance = new ApiService(context);
         }
         return instance;
+    }
+
+    public void setAdminCod(String cod) {
+        this.adminCod = cod;
     }
 
     public interface ImageListCallback {
@@ -45,7 +48,7 @@ public class ApiService {
     public void getImages(ImageListCallback callback) {
         String url = BASE_URL + "get_images.php";
 
-        StringRequest request = new StringRequest(Request.Method.GET, url,
+        StringRequest request = new StringRequest(Request.Method.POST, url,
                 response -> {
                     try {
                         Type listType = new TypeToken<List<ImageModel>>(){}.getType();
@@ -55,9 +58,20 @@ public class ApiService {
                         callback.onError("Ошибка парсинга");
                     }
                 },
-                error -> callback.onError("Ошибка соединения. Попробуйте позже.")
-        );
+                error -> callback.onError("Ошибка соединения")
+        ) {
+            @Override
+            public String getBodyContentType() {
+                return "application/x-www-form-urlencoded; charset=UTF-8";
+            }
 
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<>();
+                params.put("cod", adminCod);
+                return params;
+            }
+        };
         requestQueue.add(request);
     }
 
@@ -73,16 +87,21 @@ public class ApiService {
                         callback.onError("Ошибка парсинга");
                     }
                 },
-                error -> callback.onError("Ошибка соединения. Попробуйте позже.")
+                error -> callback.onError("Ошибка соединения")
         ) {
+            @Override
+            public String getBodyContentType() {
+                return "application/x-www-form-urlencoded; charset=UTF-8";
+            }
+
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
+                params.put("admin_cod", adminCod);
                 params.put("filename", filename);
                 return params;
             }
         };
-
         requestQueue.add(request);
     }
 
@@ -98,17 +117,22 @@ public class ApiService {
                         callback.onError("Ошибка парсинга");
                     }
                 },
-                error -> callback.onError("Ошибка соединения. Попробуйте позже.")
+                error -> callback.onError("Ошибка соединения")
         ) {
+            @Override
+            public String getBodyContentType() {
+                return "application/x-www-form-urlencoded; charset=UTF-8";
+            }
+
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
+                params.put("admin_cod", adminCod);
                 params.put("old_name", oldName);
                 params.put("new_name", newName);
                 return params;
             }
         };
-
         requestQueue.add(request);
     }
 

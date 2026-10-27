@@ -1,21 +1,12 @@
 package com.example.kovka;
 
-import android.app.WallpaperManager;
-
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.telecom.Call;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ImageView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -29,37 +20,36 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import androidx.lifecycle.ViewModel;
+import java.util.Map;
 
 public class SelectImgFromServerActivity extends AppCompatActivity {
     private static final String URL_PRODUCTS = Config.API_BASE + "get_products.php";
     List<Product> productList;
     RecyclerView recyclerView;
     JSONObject product;
+    private String adminCod;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_img_from_server);
 
-        //получение recyclerview из xml
+        adminCod = getIntent().getStringExtra("cod");
+
         recyclerView = findViewById(R.id.recylcerView);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         productList = new ArrayList<>();
 
-        //Переворачивает список
         LinearLayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
         layoutManager.setReverseLayout(true);
         layoutManager.setStackFromEnd(true);
         recyclerView.setLayoutManager(layoutManager);
 
-        //этот метод будет извлекать и анализировать json
-        //чтобы отобразить его в recyclerview
         loadProducts();
     }
 
@@ -72,10 +62,10 @@ public class SelectImgFromServerActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-
-        switch(id) {
+        switch (id) {
             case R.id.save:
                 Intent intent = new Intent(this, SaveImgActivity.class);
+                intent.putExtra("cod", adminCod);
                 startActivity(intent);
                 return true;
         }
@@ -83,44 +73,28 @@ public class SelectImgFromServerActivity extends AppCompatActivity {
     }
 
     private void loadProducts() {
-        // определяем слушателя нажатия элемента в списке
         ProductsAdapter.OnStateClickListener stateClickListener = new ProductsAdapter.OnStateClickListener() {
-
             public void onStateClick(Product state, int position) {
-
-                Intent intent = new Intent(SelectImgFromServerActivity.this,ImgChDelActivity.class);
-                intent.putExtra("image",state.getImage());
-                intent.putExtra("id",state.getId());
-                intent.putExtra("tags",state.getTags());
-                intent.putExtra("path",state.getPath());
+                Intent intent = new Intent(SelectImgFromServerActivity.this, ImgChDelActivity.class);
+                intent.putExtra("image", state.getImage());
+                intent.putExtra("id", state.getId());
+                intent.putExtra("tags", state.getTags());
+                intent.putExtra("path", state.getPath());
                 intent.putExtra("category", state.getCategory());
+                intent.putExtra("admin_cod", adminCod); // <-- передаем код для изменения/удаления
                 startActivity(intent);
-                Toast.makeText(getApplicationContext(), "Был выбран пункт: " + state.getTags(),
-                        Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Был выбран пункт: " + state.getTags(), Toast.LENGTH_SHORT).show();
             }
         };
-        /*
-         * Создание строкового запроса
-         * Тип запроса GET определяется первым параметром.
-         * URL-адрес определяется во втором параметре.
-         * Затем у нас есть прослушиватель ответов и прослушиватель ошибок.
-         * В прослушивателе ответа мы получим ответ JSON в виде строки.
-         * */
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, URL_PRODUCTS,
+
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, URL_PRODUCTS,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         try {
-                            //преобразование строки в объект массива json
                             JSONArray array = new JSONArray(response);
-
-                            //обход всего объекта
                             for (int i = 0; i < array.length(); i++) {
-
-                                //получение объекта продукта из массива JSON
                                 product = array.getJSONObject(i);
-
-                                //добавление товара в список товаров
                                 productList.add(new Product(
                                         product.getString("path"),
                                         product.getString("tags"),
@@ -129,8 +103,6 @@ public class SelectImgFromServerActivity extends AppCompatActivity {
                                         product.getString("category")
                                 ));
                             }
-
-                            //создание объекта адаптера и установка его в recyclerview
                             ProductsAdapter adapter = new ProductsAdapter(SelectImgFromServerActivity.this, productList, stateClickListener);
                             recyclerView.setAdapter(adapter);
                         } catch (JSONException e) {
@@ -141,11 +113,21 @@ public class SelectImgFromServerActivity extends AppCompatActivity {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-
+                        Toast.makeText(SelectImgFromServerActivity.this, "Ошибка загрузки", Toast.LENGTH_SHORT).show();
                     }
-                });
+                }) {
+            @Override
+            public String getBodyContentType() {
+                return "application/x-www-form-urlencoded; charset=UTF-8";
+            }
 
-        //добавление нашего строкового запроса в очередь
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<>();
+                params.put("cod", adminCod);
+                return params;
+            }
+        };
         Volley.newRequestQueue(this).add(stringRequest);
     }
 }
