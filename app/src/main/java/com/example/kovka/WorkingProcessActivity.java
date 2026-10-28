@@ -9,7 +9,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -23,13 +22,11 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.bumptech.glide.Glide;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,10 +40,16 @@ public class WorkingProcessActivity extends AppCompatActivity {
     ArrayList<JSONObject> infoList;
     ProgressBar progressBar;
 
+    // ИЗМЕНЕНО: Добавлена переменная для кода админа
+    String adminCod;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_working_process);
+
+        // ИЗМЕНЕНО: Получаем код из Intent
+        adminCod = getIntent().getStringExtra("cod");
 
         listView = findViewById(R.id.listView);
         progressBar = findViewById(R.id.progressBar);
@@ -55,7 +58,9 @@ public class WorkingProcessActivity extends AppCompatActivity {
 
     private void loadJSONFromURL(String url) {
         progressBar.setVisibility(View.VISIBLE);
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+
+        // ИЗМЕНЕНО: Сменили метод с GET на POST
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -68,16 +73,14 @@ public class WorkingProcessActivity extends AppCompatActivity {
                                     R.layout.working_process, R.id.date, infoList);
                             listView.setAdapter(adapter);
 
-                            // Обработчик клика по элементу списка
                             listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                                 @Override
                                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                                     JSONObject selected = infoList.get(position);
                                     final String recordId = selected.optString("id");
                                     final String currentText = selected.optString("tz");
-                                    final String imageFileName = selected.optString("image"); // имя файла из колонки image
+                                    final String imageFileName = selected.optString("image");
 
-                                    // Диалог выбора действия
                                     AlertDialog.Builder builder = new AlertDialog.Builder(WorkingProcessActivity.this);
                                     builder.setTitle("Действие с заданием");
                                     builder.setItems(new String[]{"Изменить", "Удалить", "Посмотреть изображение"},
@@ -114,23 +117,27 @@ public class WorkingProcessActivity extends AppCompatActivity {
                         progressBar.setVisibility(View.INVISIBLE);
                         Toast.makeText(WorkingProcessActivity.this, "Ошибка загрузки: " + "Ошибка соединения. Попробуйте позже.", Toast.LENGTH_SHORT).show();
                     }
-                });
+                }) {
+            // ИЗМЕНЕНО: Передаем "cod" в теле запроса
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<>();
+                params.put("cod", adminCod);
+                return params;
+            }
+        };
         RequestQueue requestQueue = Volley.newRequestQueue(this);
         requestQueue.add(stringRequest);
     }
 
+    private void showImageDialog(String imageFileName) {
+        String baseUrl = Config.IMG_BASE;
+        String fullUrl = baseUrl + imageFileName;
 
-        //  URL папки с изображениями
-        private void showImageDialog(String imageFileName) {
-            // URL папки с изображениями
-            String baseUrl = Config.IMG_BASE;
-            String fullUrl = baseUrl + imageFileName;
-
-            // Открываем FullScreenImageActivity вместо диалога
-            Intent intent = new Intent(WorkingProcessActivity.this, FullScreenImageActivity.class);
-            intent.putExtra("image_url", fullUrl);
-            startActivity(intent);
-        }
+        Intent intent = new Intent(WorkingProcessActivity.this, FullScreenImageActivity.class);
+        intent.putExtra("image_url", fullUrl);
+        startActivity(intent);
+    }
 
     private void showEditDialog(final String id, final String oldText) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -162,7 +169,6 @@ public class WorkingProcessActivity extends AppCompatActivity {
                             JSONObject json = new JSONObject(response);
                             if (!json.getBoolean("error")) {
                                 Toast.makeText(WorkingProcessActivity.this, "Задание обновлено", Toast.LENGTH_SHORT).show();
-                                // Обновить список
                                 loadJSONFromURL(JSON_URL);
                             } else {
                                 Toast.makeText(WorkingProcessActivity.this, "Ошибка: " + json.getString("message"), Toast.LENGTH_SHORT).show();
@@ -181,6 +187,8 @@ public class WorkingProcessActivity extends AppCompatActivity {
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
+                // ИЗМЕНЕНО: Добавлена передача admin_cod для авторизации
+                params.put("admin_cod", adminCod);
                 params.put("id", id);
                 params.put("tz", newText);
                 return params;
@@ -230,6 +238,8 @@ public class WorkingProcessActivity extends AppCompatActivity {
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
+                // ИЗМЕНЕНО: Добавлена передача admin_cod для авторизации
+                params.put("admin_cod", adminCod);
                 params.put("id", id);
                 return params;
             }
@@ -249,16 +259,6 @@ public class WorkingProcessActivity extends AppCompatActivity {
         return aList;
     }
 
-    public static String EncodingToUTF8(String response) {
-        try {
-            byte[] code = response.getBytes("ISO-8859-1");
-            return new String(code, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.working_process, menu);
@@ -268,7 +268,9 @@ public class WorkingProcessActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.give_tz) {
-            startActivity(new Intent(this, GiveTzActivity.class));
+            Intent intent = new Intent(this, GiveTzActivity.class);
+            intent.putExtra("admin_cod", adminCod); // <-- ЭТО ДОЛЖНО БЫТЬ!
+            startActivity(intent);
             return true;
         }
         return super.onOptionsItemSelected(item);

@@ -27,25 +27,20 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-
 public class ZakazSaveActivity extends AppCompatActivity {
-    private EditText data, izdelie, image, dlina, shirina, visota, prise, pay, proces, name, tel, email, coment	;
-    // создание строк для хранения наших значений из полей редактирования.
+    private EditText data, izdelie, image, dlina, shirina, visota, prise, pay, proces, name, tel, email, coment;
     private String data1, izdelie1, image1, dlina1, shirina1, visota1, prise1, pay1, proces1, name1, tel1, email1, coment1;
-    //Вставка времени и даты
-    String today = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",new Locale("ru")).format(Calendar.getInstance().getTime());
-    Bundle arguments;
+    String today = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", new Locale("ru")).format(Calendar.getInstance().getTime());
     String manager;
+    String adminCod;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_zakaz_save);
 
-        arguments = getIntent().getExtras();
-        if(arguments!=null) {
-            manager = arguments.get("manager").toString();
-        }
+        manager = getIntent().getStringExtra("manager");
+        adminCod = getIntent().getStringExtra("admin_cod");
 
         data = findViewById(R.id.data);
         izdelie = findViewById(R.id.izdelie);
@@ -74,7 +69,7 @@ public class ZakazSaveActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        switch(id){
+        switch (id) {
             case R.id.sozd:
                 data1 = data.getText().toString();
                 izdelie1 = izdelie.getText().toString();
@@ -90,81 +85,71 @@ public class ZakazSaveActivity extends AppCompatActivity {
                 email1 = email.getText().toString();
                 coment1 = coment.getText().toString();
 
-
-                // проверка текстовых полей, если они пусты или нет.
                 if (TextUtils.isEmpty(data1)) {
-                    data.setError("Пожалуйста, заполител это поле");
+                    data.setError("Пожалуйста, заполните это поле");
                 } else if (TextUtils.isEmpty(izdelie1)) {
-                    izdelie.setError("Пожалуйста, заполител это поле");
+                    izdelie.setError("Пожалуйста, заполните это поле");
                 } else if (TextUtils.isEmpty(prise1)) {
-                    prise.setError("Пожалуйста, заполител это поле");
+                    prise.setError("Пожалуйста, заполните это поле");
                 } else if (TextUtils.isEmpty(pay1)) {
-                    pay.setError("Пожалуйста, заполител это поле");
+                    pay.setError("Пожалуйста, заполните это поле");
                 } else if (TextUtils.isEmpty(tel1)) {
-                    tel.setError("Пожалуйста, заполител это поле");
+                    tel.setError("Пожалуйста, заполните это поле");
                 } else if (TextUtils.isEmpty(email1)) {
-                    email.setError("Пожалуйста, заполител это поле");
-                }
-                else {
-                    // вызывающий метод для изменения данных
-                    addDataToDatabase(data1, izdelie1, image1, dlina1, shirina1, visota1, prise1, pay1, proces1, name1, tel1, email1,coment1);
+                    email.setError("Пожалуйста, заполните это поле");
+                } else {
+                    addDataToDatabase(data1, izdelie1, image1, dlina1, shirina1, visota1, prise1, pay1, proces1, name1, tel1, email1, coment1);
                 }
                 return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    //Метод для добавдения в БД Новые заказы
-    private void addDataToDatabase(String data1, String izdelie1, String image1, String dlina1, String shirina1, String visota1, String prise1, String pay1, String proces1,String name1, String tel1, String email1, String coment1) {
-
-        // URL для размещения наших данных
+    private void addDataToDatabase(String data1, String izdelie1, String image1, String dlina1, String shirina1, String visota1, String prise1, String pay1, String proces1, String name1, String tel1, String email1, String coment1) {
         String url = Config.URL_CREATE + "create_zakazApp.php";
-
-        // создание новой переменной для нашей очереди запросов
         RequestQueue queue = Volley.newRequestQueue(ZakazSaveActivity.this);
 
-        // в строке ниже мы вызываем строку
-        // метод запроса для отправки данных в наш API
-        // здесь мы вызываем метод post.
-        StringRequest request = new StringRequest(Request.Method.POST, url, new com.android.volley.Response.Listener<String>() {
+        StringRequest request = new StringRequest(Request.Method.POST, url,
+                new com.android.volley.Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.e("TAG", "RESPONSE IS " + response);
+                        try {
+                            JSONObject jsonObject = new JSONObject(response);
+                            Toast toast = Toast.makeText(ZakazSaveActivity.this, "Заказ успешно создан", Toast.LENGTH_LONG);
+                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            toast.show();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        if (manager != null) {
+                            Intent intent = new Intent(getApplicationContext(), ManagerZadActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                            intent.putExtra("cod", adminCod);
+                            startActivity(intent);
+                        } else {
+                            Intent intent = new Intent(getApplicationContext(), AdminActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                            intent.putExtra("cod", adminCod);
+                            startActivity(intent);
+                        }
+                    }
+                },
+                new com.android.volley.Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(ZakazSaveActivity.this, "Нет подключения к интернету", Toast.LENGTH_SHORT).show();
+                    }
+                }) {
             @Override
-            public void onResponse(String response) {
-                Log.e("TAG", "RESPONSE IS " + response);
-                try {
-                    JSONObject jsonObject = new JSONObject(response);
-                    //  показываем тост-сообщение об успехе.
-                    Toast toast = Toast.makeText(ZakazSaveActivity.this, "Заказ успешно создан", Toast.LENGTH_LONG);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
-                    toast.show();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                if(manager!=null) {
-                    Intent intent = new Intent(getApplicationContext(), ManagerZadActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                    startActivity(intent);
-                }else {
-                    Intent intent = new Intent(getApplicationContext(), AdminActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                    startActivity(intent);
-                }
+            public String getBodyContentType() {
+                return "application/x-www-form-urlencoded; charset=UTF-8";
             }
-        }, new com.android.volley.Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                // method to handle errors.
-                Toast.makeText(ZakazSaveActivity.this, "Нет подключения к интернету", Toast.LENGTH_SHORT).show();
-            }
-        }) {
+
             @Override
             protected Map<String, String> getParams() {
-
-                // ниже строки мы создаем карту для хранения
-                // наши значения в паре ключ-значение.
-                Map<String, String> params = new HashMap<String, String>();
-
-                // в нижней строке мы передаем наш
-                // пара ключей и значений для наших параметров.
+                Map<String, String> params = new HashMap<>();
+                params.put("admin_cod", adminCod);
                 params.put("date", data1);
                 params.put("izdelie", izdelie1);
                 params.put("image", image1);
@@ -174,18 +159,13 @@ public class ZakazSaveActivity extends AppCompatActivity {
                 params.put("prise", prise1);
                 params.put("pay", pay1);
                 params.put("proces", proces1);
-                params.put("pay", pay1);
                 params.put("name", name1);
                 params.put("tel", tel1);
                 params.put("email", email1);
                 params.put("coment", coment1);
-
-                // наконец мы возвращаем наши параметры.
                 return params;
             }
         };
-        // ниже строки, чтобы сделать
-        //  запрос объекта json.
         queue.add(request);
     }
 }

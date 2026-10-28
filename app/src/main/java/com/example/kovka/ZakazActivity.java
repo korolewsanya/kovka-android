@@ -26,31 +26,27 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-
 public class ZakazActivity extends AppCompatActivity {
-    private static final String JSON_URL = Config.API_BASE + "zakazApp.php";// UTF-8
+    private static final String URL = Config.API_BASE + "zakazApp.php";
     ListView listView;
     ArrayList<JSONObject> infoList;
     String manager;
-    Bundle arguments;
+    String adminCod;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_zakaz);
 
-        arguments = getIntent().getExtras();
-        if(arguments!=null) {
-            manager = arguments.get("manager").toString();
-        }
+        manager = getIntent().getStringExtra("manager");
+        adminCod = getIntent().getStringExtra("cod");
 
-        listView = (ListView) findViewById(R.id.listView);
-        loadJSONFromURL(JSON_URL);
+        listView = findViewById(R.id.listView);
+        loadJSONFromURL(URL);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -85,8 +81,9 @@ public class ZakazActivity extends AppCompatActivity {
                 intent.putExtra("tel", tel);
                 intent.putExtra("email", email);
                 intent.putExtra("coment", coment);
+                intent.putExtra("admin_cod", adminCod); // <-- передаем код для изменения/удаления
 
-                if(manager!=null) {
+                if (manager != null) {
                     intent.putExtra("manager", manager);
                 }
                 startActivity(intent);
@@ -94,13 +91,13 @@ public class ZakazActivity extends AppCompatActivity {
                 changeImgToDatabase(image);
             }
         });
-
     }
 
     private void loadJSONFromURL(String url) {
-        final ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        final ProgressBar progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(ListView.VISIBLE);
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -120,15 +117,23 @@ public class ZakazActivity extends AppCompatActivity {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        progressBar.setVisibility(View.INVISIBLE);
                         Toast.makeText(getApplicationContext(), "Ошибка соединения. Попробуйте позже.", Toast.LENGTH_SHORT).show();
                     }
-                });
+                }) {
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<>();
+                params.put("cod", adminCod);
+                return params;
+            }
+        };
         RequestQueue requestQueue = Volley.newRequestQueue(this);
         requestQueue.add(stringRequest);
     }
 
     private ArrayList<JSONObject> getArrayListFromJSONArray(JSONArray jsonArray) {
-        ArrayList<JSONObject> aList = new ArrayList<JSONObject>();
+        ArrayList<JSONObject> aList = new ArrayList<>();
         try {
             if (jsonArray != null) {
                 for (int i = 0; i < jsonArray.length(); i++) {
@@ -139,17 +144,6 @@ public class ZakazActivity extends AppCompatActivity {
             js.printStackTrace();
         }
         return aList;
-    }
-
-   public static String EncodingToUTF8(String response) {
-        try {
-            byte[] code = response.toString().getBytes("ISO-8859-1");
-            response = new String(code, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            return null;
-        }
-        return response;
     }
 
     @Override
@@ -165,7 +159,8 @@ public class ZakazActivity extends AppCompatActivity {
         switch (id) {
             case R.id.save:
                 Intent intent = new Intent(this, ZakazSaveActivity.class);
-                if(arguments!=null) {
+                intent.putExtra("admin_cod", adminCod); // <-- передаем код для создания
+                if (manager != null) {
                     intent.putExtra("manager", manager);
                 }
                 startActivity(intent);
@@ -174,62 +169,47 @@ public class ZakazActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    //Метод для замены названия изображения в таблице img
+    // Этот метод пока оставляем как есть, img_id.php переделаем в самом конце
+    // Этот метод переделан под новый img_id.php
     private void changeImgToDatabase(String img1) {
-
-        // URL для размещения наших данных
         String url = Config.API_BASE + "img_id.php";
-
-        // создание новой переменной для нашей очереди запросов
         RequestQueue queue = Volley.newRequestQueue(ZakazActivity.this);
 
-        // в строке ниже мы вызываем строку
-        // метод запроса для отправки данных в наш API
-        // здесь мы вызываем метод post.
-        StringRequest request = new StringRequest(Request.Method.POST, url, new com.android.volley.Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                Log.e("TAG", "RESPONSE IS " + response);
-                try {
-                    JSONObject jsonObject = new JSONObject(response);
-                    //  показываем тост-сообщение об успехе.
-                    Toast toast = Toast.makeText(ZakazActivity.this, "Заказ добавлен", Toast.LENGTH_LONG);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
-                    toast.show();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, new com.android.volley.Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                // method to handle errors.
-                Toast.makeText(ZakazActivity.this, "Нет подключения к интернету", Toast.LENGTH_SHORT).show();
-            }
-        }) {
+        StringRequest request = new StringRequest(Request.Method.POST, url,
+                new com.android.volley.Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.e("TAG", "RESPONSE IS " + response);
+                        try {
+                            JSONObject jsonObject = new JSONObject(response);
+                            Toast toast = Toast.makeText(ZakazActivity.this, "Заказ добавлен", Toast.LENGTH_LONG);
+                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            toast.show();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                },
+                new com.android.volley.Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(ZakazActivity.this, "Нет подключения к интернету", Toast.LENGTH_SHORT).show();
+                    }
+                }) {
             @Override
             public String getBodyContentType() {
-                // поскольку мы передаем данные в виде закодированного URL
-                // поэтому мы передаем тип содержимого ниже
                 return "application/x-www-form-urlencoded; charset=UTF-8";
             }
 
             @Override
             protected Map<String, String> getParams() {
-
-                // ниже строки мы создаем карту для хранения
-                // наши значения в паре ключ-значение.
-                Map<String, String> params = new HashMap<String, String>();
-
-                // в нижней строке мы передаем наш
-                // пара ключей и значений для наших параметров.
+                Map<String, String> params = new HashMap<>();
+                // ИЗМЕНЕНО: Передаем admin_cod для авторизации
+                params.put("admin_cod", adminCod);
                 params.put("img", img1);
-
-                // наконец мы возвращаем наши параметры.
                 return params;
             }
         };
-        // строки, чтобы сделать запрос объекта json.
         queue.add(request);
     }
 }

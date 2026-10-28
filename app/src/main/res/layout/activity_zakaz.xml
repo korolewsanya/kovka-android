@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".ZakazActivity">
 
+    <!-- Шапка таблицы -->
     <LinearLayout
         android:id="@+id/ll"
         android:layout_width="match_parent"
@@ -51,6 +52,7 @@
             android:layout_gravity="center"/>
     </LinearLayout>
 
+    <!-- Разделитель под шапкой -->
     <View
         android:id="@+id/horizont"
         android:layout_width="match_parent"
@@ -58,29 +60,28 @@
         app:layout_constraintTop_toBottomOf="@+id/ll"
         android:background="@android:color/black" />
 
+    <!-- Сам список. Привязываем его верх к разделителю, а НИЗ к низу экрана (parent) -->
     <ListView
         android:id="@+id/listView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         app:layout_constraintTop_toBottomOf="@+id/horizont"
+        app:layout_constraintBottom_toBottomOf="parent"
         android:stackFromBottom="true"
         android:transcriptMode="alwaysScroll"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp"
         />
-    <View
-        android:id="@+id/hor"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@android:color/black"
-        app:layout_constraintTop_toBottomOf="@+id/listView"
-        />
+
+    <!-- Прогресс-бар по центру экрана, скрыт по умолчанию -->
     <ProgressBar
         android:visibility="gone"
         android:id="@+id/progressBar"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/hor"
-        />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

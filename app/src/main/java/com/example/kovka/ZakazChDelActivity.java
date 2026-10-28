@@ -27,10 +27,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ZakazChDelActivity extends AppCompatActivity {
-    private EditText id, data, izdelie, image, dlina, shirina, visota, prise, pay, proces, name, tel, email, coment	;
-    // создание строк для хранения наших значений из полей редактирования.
+    private EditText id, data, izdelie, image, dlina, shirina, visota, prise, pay, proces, name, tel, email, coment;
     private String idi1, data1, izdelie1, image1, dlina1, shirina1, visota1, prise1, pay1, proces1, name1, tel1, email1, coment1;
     String manager;
+    String adminCod;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,44 +53,25 @@ public class ZakazChDelActivity extends AppCompatActivity {
         coment = findViewById(R.id.coment);
 
         Intent intent = getIntent();
-        String idi2 = intent.getStringExtra("idi");
-        String date2 = intent.getStringExtra("date");
-        String izdelie2 = intent.getStringExtra("izdelie");
-        String image2 = intent.getStringExtra("image");
-        String dlina2 = intent.getStringExtra("dlina");
-        String shirina2 = intent.getStringExtra("shirina");
-        String visota2 = intent.getStringExtra("visota");
-        String prise2 = intent.getStringExtra("prise");
-        String pay2 = intent.getStringExtra("pay");
-        String proces2 = intent.getStringExtra("proces");
-        String name2 = intent.getStringExtra("name");
-        String tel2 = intent.getStringExtra("tel");
-        String email2 = intent.getStringExtra("email");
-        String coment2 = intent.getStringExtra("coment");
-
-         if(intent.getStringExtra("manager")!=null){
+        adminCod = intent.getStringExtra("admin_cod");
         manager = intent.getStringExtra("manager");
-         }
 
-        id.setText(idi2);
-        data.setText(date2);
-        izdelie.setText(izdelie2);
-        image.setText(image2);
-        dlina.setText(dlina2);
-        shirina.setText(shirina2);
-        visota.setText(visota2);
-        prise.setText(prise2);
-        pay.setText(pay2);
-        proces.setText(proces2);
-        name.setText(name2);
-        tel.setText(tel2);
-        email.setText(email2);
-        coment.setText(coment2);
+        id.setText(intent.getStringExtra("idi"));
+        data.setText(intent.getStringExtra("date"));
+        izdelie.setText(intent.getStringExtra("izdelie"));
+        image.setText(intent.getStringExtra("image"));
+        dlina.setText(intent.getStringExtra("dlina"));
+        shirina.setText(intent.getStringExtra("shirina"));
+        visota.setText(intent.getStringExtra("visota"));
+        prise.setText(intent.getStringExtra("prise"));
+        pay.setText(intent.getStringExtra("pay"));
+        proces.setText(intent.getStringExtra("proces"));
+        name.setText(intent.getStringExtra("name"));
+        tel.setText(intent.getStringExtra("tel"));
+        email.setText(intent.getStringExtra("email"));
+        coment.setText(intent.getStringExtra("coment"));
 
-       //Задержка открытия браузера.
-        //Необходимо для того чтобы успели обновится данные в DB img
         int DELAY = 1000;
-
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             public void run() {
@@ -127,30 +108,29 @@ public class ZakazChDelActivity extends AppCompatActivity {
                 email1 = email.getText().toString();
                 coment1 = coment.getText().toString();
 
-                // проверка текстовых полей, если они пусты или нет.
                 if (TextUtils.isEmpty(izdelie1)) {
-                    izdelie.setError("Пожалуйста, заполител это поле");
+                    izdelie.setError("Пожалуйста, заполните это поле");
                 } else if (TextUtils.isEmpty(prise1)) {
-                    prise.setError("Пожалуйста, заполител это поле");
+                    prise.setError("Пожалуйста, заполните это поле");
                 } else if (TextUtils.isEmpty(pay1)) {
-                    pay.setError("Пожалуйста, заполител это поле");
+                    pay.setError("Пожалуйста, заполните это поле");
                 } else if (TextUtils.isEmpty(tel1)) {
-                    tel.setError("Пожалуйста, заполител это поле");
+                    tel.setError("Пожалуйста, заполните это поле");
                 } else if (TextUtils.isEmpty(data1)) {
-                    data.setError("Пожалуйста, заполител это поле");
+                    data.setError("Пожалуйста, заполните это поле");
                 } else if (email1.isEmpty()) {
-                    email.setError("Пожалуйста, заполител это поле");
-                }
-                else {
-                    // вызывающий метод для изменения данных
-                    addDataToDatabase(idi1, data1, izdelie1, image1, dlina1, shirina1, visota1, prise1, pay1, proces1, name1, tel1, email1,coment1);
-                    if(manager!=null) {
+                    email.setError("Пожалуйста, заполните это поле");
+                } else {
+                    addDataToDatabase(idi1, data1, izdelie1, image1, dlina1, shirina1, visota1, prise1, pay1, proces1, name1, tel1, email1, coment1);
+                    if (manager != null) {
                         Intent intent = new Intent(this, ManagerZadActivity.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                        intent.putExtra("cod", adminCod);
                         startActivity(intent);
-                    }else {
+                    } else {
                         Intent intent = new Intent(this, AdminActivity.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                        intent.putExtra("cod", adminCod);
                         startActivity(intent);
                     }
                 }
@@ -158,13 +138,15 @@ public class ZakazChDelActivity extends AppCompatActivity {
 
             case R.id.del:
                 getCourseDetails2(id.getText().toString());
-                if(manager!=null) {
+                if (manager != null) {
                     Intent intent = new Intent(this, ManagerZadActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    intent.putExtra("cod", adminCod);
                     startActivity(intent);
-                }else {
+                } else {
                     Intent intent = new Intent(this, AdminActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    intent.putExtra("cod", adminCod);
                     startActivity(intent);
                 }
                 Toast toast = Toast.makeText(ZakazChDelActivity.this, "Заказ удален", Toast.LENGTH_LONG);
@@ -175,53 +157,40 @@ public class ZakazChDelActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void addDataToDatabase(String idi1, String data1, String izdelie1, String image1, String dlina1, String shirina1, String visota1, String prise1, String pay1, String proces1,String name1, String tel1, String email1, String coment1) {
-
+    private void addDataToDatabase(String idi1, String data1, String izdelie1, String image1, String dlina1, String shirina1, String visota1, String prise1, String pay1, String proces1, String name1, String tel1, String email1, String coment1) {
         String url = Config.URL_CHANGE + "change_zakazApp.php";
-
-        // создание новой переменной для нашей очереди запросов
         RequestQueue queue = Volley.newRequestQueue(ZakazChDelActivity.this);
 
-        // в строке ниже мы вызываем строку
-        // метод запроса для отправки данных в наш API
-        // здесь мы вызываем метод post.
-        StringRequest request = new StringRequest(Request.Method.POST, url, new com.android.volley.Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                Log.e("TAG", "RESPONSE IS " + response);
-                try {
-                    JSONObject jsonObject = new JSONObject(response);
-                    //  показываем тост-сообщение об успехе.
-                    Toast toast = Toast.makeText(ZakazChDelActivity.this, "Изменения в заказе сохранены", Toast.LENGTH_LONG);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
-                    toast.show();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, new com.android.volley.Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                // method to handle errors.
-                Toast.makeText(ZakazChDelActivity.this, "Не удалось получить ответ = " + error, Toast.LENGTH_SHORT).show();
-            }
-        }) {
+        StringRequest request = new StringRequest(Request.Method.POST, url,
+                new com.android.volley.Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.e("TAG", "RESPONSE IS " + response);
+                        try {
+                            JSONObject jsonObject = new JSONObject(response);
+                            Toast toast = Toast.makeText(ZakazChDelActivity.this, "Изменения в заказе сохранены", Toast.LENGTH_LONG);
+                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            toast.show();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                },
+                new com.android.volley.Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(ZakazChDelActivity.this, "Не удалось получить ответ = " + error, Toast.LENGTH_SHORT).show();
+                    }
+                }) {
             @Override
             public String getBodyContentType() {
-                // поскольку мы передаем данные в виде закодированного URL
-                // поэтому мы передаем тип содержимого ниже
                 return "application/x-www-form-urlencoded; charset=UTF-8";
             }
 
             @Override
             protected Map<String, String> getParams() {
-
-                // ниже строки мы создаем карту для хранения
-                // наши значения в паре ключ-значение.
-                Map<String, String> params = new HashMap<String, String>();
-
-                // в нижней строке мы передаем наш
-                // пара ключей и значений для наших параметров.
+                Map<String, String> params = new HashMap<>();
+                params.put("admin_cod", adminCod);
                 params.put("id", idi1);
                 params.put("date", data1);
                 params.put("izdelie", izdelie1);
@@ -232,51 +201,37 @@ public class ZakazChDelActivity extends AppCompatActivity {
                 params.put("prise", prise1);
                 params.put("pay", pay1);
                 params.put("proces", proces1);
-                params.put("pay", pay1);
                 params.put("name", name1);
                 params.put("tel", tel1);
                 params.put("email", email1);
                 params.put("coment", coment1);
-
-                // наконец мы возвращаем наши параметры.
                 return params;
             }
         };
-        // ниже строки, чтобы сделать
-        //  запрос объекта json.
         queue.add(request);
     }
+
     private void getCourseDetails2(String courseId) {
-
-        // URL для публикации наших данных
         String url = Config.URL_DELETE + "delete_zakazApp.php";
-
-        // создание новой переменной для нашей очереди запросов
         RequestQueue queue = Volley.newRequestQueue(ZakazChDelActivity.this);
 
-        StringRequest request = new StringRequest(Request.Method.POST, url, new com.android.volley.Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                try {
-                    // в строке ниже передается наш ответ на объект json.
-                    JSONObject jsonObject = new JSONObject(response);
-                    // в строке ниже мы проверяем, является ли ответ нулевым или нет.
-                    if (jsonObject.getString("courseName") == null) {
-                        // отображение всплывающего сообщения, если мы получим ошибку
-                        Toast.makeText(ZakazChDelActivity.this, " ", Toast.LENGTH_SHORT).show();
-                    } else {
+        StringRequest request = new StringRequest(Request.Method.POST, url,
+                new com.android.volley.Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            JSONObject jsonObject = new JSONObject(response);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, new com.android.volley.Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                // method to handle errors.
-                Toast.makeText(ZakazChDelActivity.this, "Fail to get course" + error, Toast.LENGTH_SHORT).show();
-            }
-        }) {
+                },
+                new com.android.volley.Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(ZakazChDelActivity.this, "Fail to get course" + error, Toast.LENGTH_SHORT).show();
+                    }
+                }) {
             @Override
             public String getBodyContentType() {
                 return "application/x-www-form-urlencoded; charset=UTF-8";
@@ -284,17 +239,12 @@ public class ZakazChDelActivity extends AppCompatActivity {
 
             @Override
             protected Map<String, String> getParams() {
-                // ниже строки мы создаем карту для хранения наших значений в паре ключ-значение.
-                Map<String, String> params = new HashMap<String, String>();
-                // В строке ниже мы передаем пару ключей и значений нашим параметрам.
+                Map<String, String> params = new HashMap<>();
+                params.put("admin_cod", adminCod);
                 params.put("id", courseId);
-
-                // наконец-то мы возвращаем наши параметры.
                 return params;
             }
         };
-        // линия ниже - сделать
-        // запрос объекта json.
         queue.add(request);
     }
 }
