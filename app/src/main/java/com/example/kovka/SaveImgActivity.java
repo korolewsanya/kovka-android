@@ -1,35 +1,31 @@
 package com.example.kovka;
 
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import org.json.JSONArray;
+
 import org.json.JSONException;
 import org.json.JSONObject;
-import java.util.ArrayList;
+
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class SaveImgActivity extends AppCompatActivity {
 
     private EditText izdelieEditText;
     private EditText fileEditText;
+    private String adminCod;
 
-    // Список категорий (таблиц)
     private final String[] categories = {"mangal", "lavo4ki", "kozirek", "zabor", "vorota",
             "ogradki", "reshetki", "mebel", "melo4i"};
     private final String[] categoryNames = {"Мангалы", "Лавочки", "Козырьки", "Заборы", "Ворота",
@@ -40,11 +36,13 @@ public class SaveImgActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_save_img);
 
+        adminCod = getIntent().getStringExtra("cod");
+
         izdelieEditText = findViewById(R.id.izdelie);
         fileEditText = findViewById(R.id.file);
     }
 
-    public void save(View view) {
+    public void save(android.view.View view) {
         String izdelie = izdelieEditText.getText().toString().trim();
         String fileName = fileEditText.getText().toString().trim();
 
@@ -57,7 +55,6 @@ public class SaveImgActivity extends AppCompatActivity {
             return;
         }
 
-        // Показываем диалог выбора категории
         showCategoryDialog(izdelie, fileName);
     }
 
@@ -65,12 +62,10 @@ public class SaveImgActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Выберите категорию");
 
-        // Создаём адаптер для списка
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, categoryNames);
 
         builder.setAdapter(adapter, (dialog, which) -> {
             String selectedCategory = categories[which];
-            // Сохраняем в выбранную таблицу
             saveToDatabase(izdelie, fileName, selectedCategory);
             dialog.dismiss();
         });
@@ -89,9 +84,9 @@ public class SaveImgActivity extends AppCompatActivity {
                         JSONObject obj = new JSONObject(response);
                         if (!obj.getBoolean("error")) {
                             Toast.makeText(SaveImgActivity.this, "Сохранено в " + getCategoryName(tableName), Toast.LENGTH_LONG).show();
-                            // Возвращаемся назад в AdminActivity
                             Intent intent = new Intent(this, AdminActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                            intent.putExtra("cod", adminCod);
                             startActivity(intent);
                         } else {
                             Toast.makeText(SaveImgActivity.this, "Ошибка: " + obj.getString("message"), Toast.LENGTH_SHORT).show();
@@ -104,12 +99,17 @@ public class SaveImgActivity extends AppCompatActivity {
                 error -> Toast.makeText(SaveImgActivity.this, "Ошибка соединения. Попробуйте позже.", Toast.LENGTH_SHORT).show()) {
 
             @Override
+            public String getBodyContentType() {
+                return "application/x-www-form-urlencoded; charset=UTF-8";
+            }
+
+            @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
+                params.put("admin_cod", adminCod); // <-- авторизация
                 params.put("table", tableName);
                 params.put("izdelie", izdelie);
                 params.put("image", fileName);
-                // Дополнительные поля можно оставить пустыми
                 params.put("dlina", "");
                 params.put("shirina", "");
                 params.put("visota", "");

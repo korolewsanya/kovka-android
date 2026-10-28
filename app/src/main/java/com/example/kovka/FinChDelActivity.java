@@ -27,9 +27,9 @@ import java.util.Map;
 
 public class FinChDelActivity extends AppCompatActivity {
     private EditText date, dohod, rashod, prib;
-    // создание строк для хранения наших значений из полей редактирования.
     private String nom1, date1, dohod1, rashod1, prib1;
     String nom2;
+    private String adminCod;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,26 +46,16 @@ public class FinChDelActivity extends AppCompatActivity {
             public void onClick(View view) {
                 String rashodText = rashod.getText().toString();
                 String dohodText = dohod.getText().toString();
-
-// Проверяем оба поля на пустоту
-                if (TextUtils.isEmpty(rashodText)) {
-                    rashod.setError("Введите расход");
-                    return;
-                }
-                if (TextUtils.isEmpty(dohodText)) {
-                    dohod.setError("Введите доход");
-                    return;
-                }
-// Если поля не пустые - парсим и вычисляем
+                if (TextUtils.isEmpty(rashodText)) { rashod.setError("Введите расход"); return; }
+                if (TextUtils.isEmpty(dohodText)) { dohod.setError("Введите доход"); return; }
                 int ras = Integer.parseInt(rashodText);
                 int doh = Integer.parseInt(dohodText);
-                int pribil = doh - ras;
-                String pr = Integer.toString(pribil);
-                prib.setText(pr);
+                prib.setText(Integer.toString(doh - ras));
             }
         });
 
         Intent intent = getIntent();
+        adminCod = intent.getStringExtra("admin_cod");
         nom2 = intent.getStringExtra("nom");
         String date2 = intent.getStringExtra("date");
         String dohod2 = intent.getStringExtra("dohod");
@@ -87,7 +77,6 @@ public class FinChDelActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-
         switch (id) {
             case R.id.change:
                 nom1 = nom2;
@@ -96,21 +85,15 @@ public class FinChDelActivity extends AppCompatActivity {
                 rashod1 = rashod.getText().toString();
                 prib1 = prib.getText().toString();
 
-                // проверка текстовых полей, если они пусты или нет.
-                if (TextUtils.isEmpty(date1)) {
-                    date.setError("Пожалуйста, заполител это поле");
-                } else if (TextUtils.isEmpty(dohod1)) {
-                    dohod.setError("Пожалуйста, заполител это поле");
-                } else if (TextUtils.isEmpty(rashod1)) {
-                    rashod.setError("Пожалуйста, заполител это поле");
-                } else if (TextUtils.isEmpty(prib1)) {
-                    prib.setError("Пожалуйста, заполител это поле");
-                }
+                if (TextUtils.isEmpty(date1)) { date.setError("Пожалуйста, заполните это поле"); }
+                else if (TextUtils.isEmpty(dohod1)) { dohod.setError("Пожалуйста, заполните это поле"); }
+                else if (TextUtils.isEmpty(rashod1)) { rashod.setError("Пожалуйста, заполните это поле"); }
+                else if (TextUtils.isEmpty(prib1)) { prib.setError("Пожалуйста, заполните это поле"); }
                 else {
-                    // вызывающий метод для изменения данных
                     addDataToDatabase(nom1, date1, dohod1, rashod1, prib1);
                     Intent intent = new Intent(this, AdminActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    intent.putExtra("cod", adminCod);
                     startActivity(intent);
                 }
                 return true;
@@ -119,8 +102,9 @@ public class FinChDelActivity extends AppCompatActivity {
                 getCourseDetails2(nom2);
                 Intent intent = new Intent(this, AdminActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                intent.putExtra("cod", adminCod);
                 startActivity(intent);
-                Toast toast = Toast.makeText(FinChDelActivity.this, "Удалёно", Toast.LENGTH_LONG);
+                Toast toast = Toast.makeText(FinChDelActivity.this, "Удалено", Toast.LENGTH_LONG);
                 toast.setGravity(Gravity.CENTER, 0, 0);
                 toast.show();
                 return true;
@@ -129,98 +113,72 @@ public class FinChDelActivity extends AppCompatActivity {
     }
 
     private void addDataToDatabase(String nom1, String date1, String dohod1, String rashod1, String prib1) {
-
-        // URL для размещения наших данных
         String url = Config.URL_CHANGE + "change_finApp.php";
-
-        // создание новой переменной для нашей очереди запросов
         RequestQueue queue = Volley.newRequestQueue(FinChDelActivity.this);
 
-        // в строке ниже мы вызываем строку
-        // метод запроса для отправки данных в наш API
-        // здесь мы вызываем метод post.
-        StringRequest request = new StringRequest(Request.Method.POST, url, new com.android.volley.Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                Log.e("TAG", "RESPONSE IS " + response);
-                try {
-                    JSONObject jsonObject = new JSONObject(response);
-                    //  показываем тост-сообщение об успехе.
-                    Toast toast = Toast.makeText(FinChDelActivity.this, "Изменения сохранены", Toast.LENGTH_LONG);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
-                    toast.show();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, new com.android.volley.Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                // method to handle errors.
-                Toast.makeText(FinChDelActivity.this, "Нет подключения к интернету", Toast.LENGTH_SHORT).show();
-            }
-        }) {
+        StringRequest request = new StringRequest(Request.Method.POST, url,
+                new com.android.volley.Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.e("TAG", "RESPONSE IS " + response);
+                        try {
+                            JSONObject jsonObject = new JSONObject(response);
+                            Toast toast = Toast.makeText(FinChDelActivity.this, "Изменения сохранены", Toast.LENGTH_LONG);
+                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            toast.show();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                },
+                new com.android.volley.Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(FinChDelActivity.this, "Нет подключения к интернету", Toast.LENGTH_SHORT).show();
+                    }
+                }) {
             @Override
             public String getBodyContentType() {
-                // поскольку мы передаем данные в виде закодированного URL
-                // поэтому мы передаем тип содержимого ниже
                 return "application/x-www-form-urlencoded; charset=UTF-8";
             }
 
             @Override
             protected Map<String, String> getParams() {
-
-                // ниже строки мы создаем карту для хранения
-                // наши значения в паре ключ-значение.
-                Map<String, String> params = new HashMap<String, String>();
-
-                // в нижней строке мы передаем наш
-                // пара ключей и значений для наших параметров.
+                Map<String, String> params = new HashMap<>();
+                params.put("cod", adminCod);
                 params.put("id", nom1);
                 params.put("date", date1);
                 params.put("dohod", dohod1);
                 params.put("rashod", rashod1);
                 params.put("prib", prib1);
-
-                // наконец мы возвращаем наши параметры.
                 return params;
             }
         };
-        // ниже строки, чтобы сделать
-        //  запрос объекта json.
+        NetworkUtils.configureTimeout(request);
         queue.add(request);
     }
+
     private void getCourseDetails2(String courseId) {
-
-        // URL для публикации наших данных
         String url = Config.URL_DELETE + "delete_finApp.php";
-
-        // создание новой переменной для нашей очереди запросов
         RequestQueue queue = Volley.newRequestQueue(FinChDelActivity.this);
 
-        StringRequest request = new StringRequest(Request.Method.POST, url, new com.android.volley.Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                try {
-                    // в строке ниже передается наш ответ на объект json.
-                    JSONObject jsonObject = new JSONObject(response);
-                    // в строке ниже мы проверяем, является ли ответ нулевым или нет.
-                    if (jsonObject.getString("courseName") == null) {
-                        // displaying a toast message if we get error
-                        Toast.makeText(FinChDelActivity.this, "Please enter valid id.", Toast.LENGTH_SHORT).show();
-                    } else {
+        StringRequest request = new StringRequest(Request.Method.POST, url,
+                new com.android.volley.Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            JSONObject jsonObject = new JSONObject(response);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, new com.android.volley.Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                // method to handle errors.
-                Toast.makeText(FinChDelActivity.this, "Fail to get course" + error, Toast.LENGTH_SHORT).show();
-            }
-        }) {
+                },
+                new com.android.volley.Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(FinChDelActivity.this, "Fail to get course" + error, Toast.LENGTH_SHORT).show();
+                    }
+                }) {
             @Override
             public String getBodyContentType() {
                 return "application/x-www-form-urlencoded; charset=UTF-8";
@@ -228,19 +186,13 @@ public class FinChDelActivity extends AppCompatActivity {
 
             @Override
             protected Map<String, String> getParams() {
-
-                // ниже строки мы создаем карту для хранения наших значений в паре ключ-значение.
-                Map<String, String> params = new HashMap<String, String>();
-
-                // В строке ниже мы передаем пару ключей и значений нашим параметрам.
+                Map<String, String> params = new HashMap<>();
+                params.put("cod", adminCod);
                 params.put("id", courseId);
-
-                // наконец-то мы возвращаем наши параметры.
                 return params;
             }
         };
-        // линия ниже - сделать
-        // запрос объекта json.
+        NetworkUtils.configureTimeout(request);
         queue.add(request);
     }
 }

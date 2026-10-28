@@ -8,12 +8,15 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-public class AdminActivity extends AppCompatActivity {
+public class
+AdminActivity extends AppCompatActivity {
+    private String adminCod;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin);
+        adminCod = getIntent().getStringExtra("cod");
     }
 
     @Override
@@ -29,59 +32,37 @@ public class AdminActivity extends AppCompatActivity {
         switch(id) {
             case R.id.img:
                 Intent intent3 = new Intent(this, UploadImgToServerActivity.class);
+                intent3.putExtra("cod", adminCod);
                 startActivity(intent3);
                 return true;
 
             case R.id.img2:
                 Intent intent4 = new Intent(this, SelectImgFromServerActivity.class);
+                intent4.putExtra("cod", adminCod);
                 startActivity(intent4);
                 return true;
 
             case R.id.img3:
                 Intent intent5 = new Intent(this, SelectAllImgFromServerActivity.class);
+                intent5.putExtra("cod", adminCod); // <-- Вот это передает код!
                 startActivity(intent5);
                 return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    public void zakaz(View view) {
-        Intent intent = new Intent(this, ZakazActivity.class);
+    private void openWithCod(Class<?> cls) {
+        Intent intent = new Intent(this, cls);
+        intent.putExtra("cod", adminCod);
         startActivity(intent);
     }
 
-    public void mater(View view) {
-        Intent intent = new Intent(this, MaterActivity.class);
-        startActivity(intent);
-    }
-
-    public void zp(View view) {
-        Intent intent = new Intent(this, ZpActivity.class);
-        startActivity(intent);
-    }
-
-    public void rashod(View view) {
-        Intent intent = new Intent(this, RashodActivity.class);
-        startActivity(intent);
-    }
-
-    public void fin(View view) {
-        Intent intent = new Intent(this, FinActivity.class);
-        startActivity(intent);
-    }
-
-    public void wokers(View view) {
-        Intent intent = new Intent(this, WokersActivity.class);
-        startActivity(intent);
-    }
-
-    public void otchet(View view) {
-        Intent intent = new Intent(this, WorkingProcessActivity.class);
-        startActivity(intent);
-    }
-
-    public void dos(View view) {
-        Intent intent = new Intent(this, DostupActivity.class);
-        startActivity(intent);
-    }
+    public void zakaz(View view)  { openWithCod(ZakazActivity.class); }
+    public void mater(View view)  { openWithCod(MaterActivity.class); }
+    public void zp(View view)     { openWithCod(ZpActivity.class); }
+    public void rashod(View view) { openWithCod(RashodActivity.class); }
+    public void fin(View view)    { openWithCod(FinActivity.class); }
+    public void wokers(View view) { openWithCod(WokersActivity.class); }
+    public void otchet(View view) { openWithCod(WorkingProcessActivity.class); }
+    public void dos(View view)    { openWithCod(DostupActivity.class); }
 }

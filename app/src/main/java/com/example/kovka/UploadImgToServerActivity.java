@@ -2,16 +2,16 @@ package com.example.kovka;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.os.Bundle;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Bundle;
 import android.provider.MediaStore;
-
+import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
-import android.widget.EditText;
 
 import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
@@ -30,11 +30,15 @@ import java.util.Map;
 public class UploadImgToServerActivity extends AppCompatActivity {
     ImageView imageView;
     EditText editTextTags;
+    private String adminCod;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_upload_img_to_server);
+
+        adminCod = getIntent().getStringExtra("cod");
+        Log.d("UPLOAD_RAW", "adminCod = " + adminCod); // Для отладки
 
         imageView = findViewById(R.id.imageView);
         editTextTags = findViewById(R.id.editTextTags);
@@ -83,15 +87,19 @@ public class UploadImgToServerActivity extends AppCompatActivity {
                 new Response.Listener<NetworkResponse>() {
                     @Override
                     public void onResponse(NetworkResponse response) {
+                        String raw = new String(response.data);
+                        Log.d("UPLOAD_RAW", "Сырой ответ сервера: " + raw); // Для отладки
+
                         try {
-                            JSONObject obj = new JSONObject(new String(response.data));
-                            // проверяем, нет ли ошибки (поле error = true)
+                            JSONObject obj = new JSONObject(raw);
                             boolean error = obj.optBoolean("error", false);
                             if (!error) {
-                                // Показываем своё русское сообщение
                                 Toast.makeText(getApplicationContext(), "Файл успешно загружен", Toast.LENGTH_LONG).show();
+                                Intent intent = new Intent(UploadImgToServerActivity.this, AdminActivity.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                                intent.putExtra("cod", adminCod);
+                                startActivity(intent);
                             } else {
-                                // Если ошибка – показываем сообщение от сервера (оно может быть английским, но лучше перевести)
                                 String errMsg = obj.optString("message", "Ошибка загрузки");
                                 Toast.makeText(getApplicationContext(), errMsg, Toast.LENGTH_LONG).show();
                             }
@@ -104,17 +112,14 @@ public class UploadImgToServerActivity extends AppCompatActivity {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        String errorMsg = "Ошибка соединения. Попробуйте позже.";
-                        if (errorMsg == null || errorMsg.isEmpty()) {
-                            errorMsg = "Ошибка загрузки. Проверьте соединение.";
-                        }
-                        Toast.makeText(getApplicationContext(), errorMsg, Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), "Ошибка соединения. Попробуйте позже.", Toast.LENGTH_LONG).show();
                     }
                 }) {
 
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
+                params.put("admin_cod", adminCod);
                 params.put("tags", tags);
                 return params;
             }

@@ -3,7 +3,6 @@ package com.example.kovka;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
-
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -30,6 +29,7 @@ import java.util.Map;
 public class ImgChDelActivity extends AppCompatActivity {
     private EditText id, image, tags;
     private String idi1, image1, tags1, category;
+    private String adminCod;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +41,8 @@ public class ImgChDelActivity extends AppCompatActivity {
         tags = findViewById(R.id.tags);
 
         Intent intent = getIntent();
+        adminCod = intent.getStringExtra("admin_cod");
+
         String idi2 = intent.getStringExtra("id");
         String image2 = intent.getStringExtra("path");
         String tags2 = intent.getStringExtra("tags");
@@ -78,9 +80,9 @@ public class ImgChDelActivity extends AppCompatActivity {
                     tags.setError("Пожалуйста, заполните это поле");
                 } else {
                     addDataToDatabase(idi1, image1, tags1, category);
-                    // Переход на другую активность или всплывающее сообщение
                     Intent intent = new Intent(this, AdminActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    intent.putExtra("cod", adminCod);
                     startActivity(intent);
                 }
                 return true;
@@ -89,6 +91,7 @@ public class ImgChDelActivity extends AppCompatActivity {
                 deleteProduct(id.getText().toString(), category);
                 Intent intent = new Intent(this, AdminActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                intent.putExtra("cod", adminCod);
                 startActivity(intent);
                 Toast toast = Toast.makeText(ImgChDelActivity.this, "Удалено", Toast.LENGTH_LONG);
                 toast.setGravity(Gravity.CENTER, 0, 0);
@@ -100,7 +103,6 @@ public class ImgChDelActivity extends AppCompatActivity {
 
     private void addDataToDatabase(String idi1, String image1, String tags1, String category) {
         String url = Config.URL_CHANGE + "change_imgApp.php";
-
         RequestQueue queue = Volley.newRequestQueue(ImgChDelActivity.this);
 
         StringRequest request = new StringRequest(Request.Method.POST, url,
@@ -127,18 +129,19 @@ public class ImgChDelActivity extends AppCompatActivity {
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
+                params.put("admin_cod", adminCod);
                 params.put("id", idi1);
                 params.put("image", image1);
-                params.put("izdelie", tags1);   // здесь должно быть izdelie
+                params.put("izdelie", tags1);
                 params.put("category", category);
                 return params;
             }
         };
         queue.add(request);
     }
+
     private void deleteProduct(String productId, String category) {
         String url = Config.URL_DELETE + "delete_imgApp.php";
-
         RequestQueue queue = Volley.newRequestQueue(ImgChDelActivity.this);
 
         StringRequest request = new StringRequest(Request.Method.POST, url,
@@ -147,24 +150,15 @@ public class ImgChDelActivity extends AppCompatActivity {
                     try {
                         JSONObject jsonObject = new JSONObject(response);
                         if (!jsonObject.getBoolean("error")) {
-                            Toast.makeText(ImgChDelActivity.this,
-                                    "Удалено: " + jsonObject.getString("message"),
-                                    Toast.LENGTH_LONG).show();
-                            // Переход после успешного удаления
-                            Intent intent = new Intent(ImgChDelActivity.this, AdminActivity.class);
-                            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                            startActivity(intent);
+                            Toast.makeText(ImgChDelActivity.this, "Удалено: " + jsonObject.getString("message"), Toast.LENGTH_LONG).show();
                         } else {
-                            Toast.makeText(ImgChDelActivity.this,
-                                    "Ошибка: " + jsonObject.getString("message"),
-                                    Toast.LENGTH_LONG).show();
+                            Toast.makeText(ImgChDelActivity.this, "Ошибка: " + jsonObject.getString("message"), Toast.LENGTH_LONG).show();
                         }
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 },
-                error -> Toast.makeText(ImgChDelActivity.this,
-                        "Ошибка сети: " + error, Toast.LENGTH_SHORT).show()
+                error -> Toast.makeText(ImgChDelActivity.this, "Ошибка сети: " + error, Toast.LENGTH_SHORT).show()
         ) {
             @Override
             public String getBodyContentType() {
@@ -174,6 +168,7 @@ public class ImgChDelActivity extends AppCompatActivity {
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
+                params.put("admin_cod", adminCod);
                 params.put("id", productId);
                 params.put("category", category);
                 return params;

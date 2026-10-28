@@ -6,3 +6,4 @@ public class EndPoints {
 
     public static final String UPLOAD_URL = ROOT_URL + "uploadpic";
 }
+

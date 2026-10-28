@@ -1,8 +1,8 @@
 package com.example.kovka;
 
 public class ConfigSpinner {
-        //JSON URL
-        public static final String DATA_URL = Config.API_BASE + "vhodApp.php";
+        // ИЗМЕНЕНО: Теперь список сотрудников берется из dostupApp.php (защищенного)
+        public static final String DATA_URL = Config.API_BASE + "dostupApp.php";
 
         //Теги, используемые в строке JSON
         public static final String TAG_COD = "cod";
