@@ -59,8 +59,9 @@ public class OtDizChDelActivity extends AppCompatActivity {
         tz.setText(tz2);
         otchet.setText(job2);
 
+        // Загружаем фото
         if (imageName != null && !imageName.isEmpty() && !imageName.equals("нет изображения")) {
-            String imageUrl = "http://192.168.1.156/Kovka_git/kovka/img/" + imageName;
+            String imageUrl = "https://kovka-test1.itsanek.ru/img/" + imageName;
             Glide.with(this)
                     .load(imageUrl)
                     .placeholder(null)
@@ -129,7 +130,7 @@ public class OtDizChDelActivity extends AppCompatActivity {
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
-                params.put("cod", cod1);
+                params.put("cod", cod1); // <-- передаем cod, как ждет сервер
                 params.put("id", nom1);
                 params.put("date", data1);
                 params.put("otchet", otchet1);
@@ -163,11 +164,10 @@ public class OtDizChDelActivity extends AppCompatActivity {
                     }
                 },
                 error -> Toast.makeText(OtDizChDelActivity.this, "Ошибка соединения", Toast.LENGTH_SHORT).show()) {
-
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
-                params.put("cod", cod1);
+                params.put("cod", cod1); // <-- передаем cod
                 params.put("id", courseId);
                 return params;
             }

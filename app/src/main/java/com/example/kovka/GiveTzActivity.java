@@ -42,7 +42,6 @@ public class GiveTzActivity extends AppCompatActivity implements Spinner.OnItemS
     TextView cd;
     TextView cw;
 
-    // ИЗМЕНЕНО: Добавлена переменная для кода админа, который выдает ТЗ
     private String adminCod;
 
     @Override
@@ -50,7 +49,6 @@ public class GiveTzActivity extends AppCompatActivity implements Spinner.OnItemS
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_give_tz_activity);
 
-        // ИЗМЕНЕНО: Получаем код админа из Intent
         adminCod = getIntent().getStringExtra("admin_cod");
 
         tz = findViewById(R.id.tz);
@@ -70,7 +68,7 @@ public class GiveTzActivity extends AppCompatActivity implements Spinner.OnItemS
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        android.util.Log.d("SPINNER_RAW", "Ответ сервера: " + response); // <-- ДОБАВИТЬ ЭТО
+                        Log.d("SPINNER_RAW", "Ответ сервера: " + response);
                         JSONObject j = null;
                         try {
                             j = new JSONObject(response);
@@ -85,7 +83,7 @@ public class GiveTzActivity extends AppCompatActivity implements Spinner.OnItemS
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        android.util.Log.e("SPINNER_RAW", "Ошибка: " + error.toString()); // <-- ДОБАВИТЬ ЭТО
+                        Log.e("SPINNER_RAW", "Ошибка: " + error.toString());
                         Toast.makeText(GiveTzActivity.this, "Ошибка загрузки списка сотрудников", Toast.LENGTH_SHORT).show();
                     }
                 }) {
@@ -123,15 +121,16 @@ public class GiveTzActivity extends AppCompatActivity implements Spinner.OnItemS
         return course;
     }
 
-    private String getCod(int position) {
-        String course = "";
+    // ИЗМЕНЕНО: Метод getCod заменен на getUserId, так как сервер больше не отдает коды (только хеши)
+    private String getUserId(int position) {
+        String userId = "";
         try {
             JSONObject json = result.getJSONObject(position);
-            course = json.getString(ConfigSpinner.TAG_COD);
+            userId = json.getString(ConfigSpinner.TAG_ID); // Берем ID пользователя
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return course;
+        return userId;
     }
 
     @Override
@@ -140,9 +139,12 @@ public class GiveTzActivity extends AppCompatActivity implements Spinner.OnItemS
         String[] worker = item.split("\\s*(\\s|,|!|:)\\s*");
         prof = worker[0];
         name = worker[1];
-        cd.setText(getCod(position));
+
+        // ИЗМЕНЕНО: Используем getUserId вместо getCod
+        cd.setText(getUserId(position));
         cw.setText(getClass_work(position));
-        cod = cd.getText().toString();
+
+        cod = cd.getText().toString(); // Теперь здесь лежит ID (число), а не код доступа
         class_work = cw.getText().toString();
     }
 
@@ -172,7 +174,6 @@ public class GiveTzActivity extends AppCompatActivity implements Spinner.OnItemS
 
                         Intent intent = new Intent(GiveTzActivity.this, AdminActivity.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                        // ИЗМЕНЕНО: Возвращаем код админа, чтобы не сломать цепочку
                         intent.putExtra("cod", adminCod);
                         startActivity(intent);
                     }
@@ -191,11 +192,10 @@ public class GiveTzActivity extends AppCompatActivity implements Spinner.OnItemS
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
-                // ИЗМЕНЕНО: Передаем admin_cod для авторизации на сервере
                 params.put("admin_cod", adminCod);
                 params.put("tz", tz1);
                 params.put("date", data1);
-                params.put("cod", cod1);
+                params.put("cod", cod1); // Сюда уходит ID выбранного сотрудника
                 params.put("prof", prof1);
                 params.put("class_work", class_work1);
                 params.put("name", name1);

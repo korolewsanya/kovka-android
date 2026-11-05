@@ -2,7 +2,7 @@ package com.example.kovka;
 
 public class Config {
     // Базовый URL (меняешь здесь один раз)
-    private static final String BASE_URL = "http://192.168.1.156/Kovka_git/kovka/";
+    private static final String BASE_URL = "https://kovka-test1.itsanek.ru/";
 
     // Составные пути
     public static final String API_BASE = BASE_URL + "Kovka_CRM_Api/";

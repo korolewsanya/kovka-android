@@ -38,7 +38,7 @@ public class UploadImgToServerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_upload_img_to_server);
 
         adminCod = getIntent().getStringExtra("cod");
-        Log.d("UPLOAD_RAW", "adminCod = " + adminCod); // Для отладки
+        Log.d("UPLOAD_RAW", "adminCod = " + adminCod);
 
         imageView = findViewById(R.id.imageView);
         editTextTags = findViewById(R.id.editTextTags);
@@ -83,12 +83,15 @@ public class UploadImgToServerActivity extends AppCompatActivity {
     private void uploadBitmap(final Bitmap bitmap) {
         final String tags = editTextTags.getText().toString().trim();
 
-        VolleyMultipartRequest volleyMultipartRequest = new VolleyMultipartRequest(Request.Method.POST, EndPoints.UPLOAD_URL,
+        // ИЗМЕНЕНО: admin_cod передается в URL
+        String url = EndPoints.UPLOAD_URL + "&admin_cod=" + adminCod;
+
+        VolleyMultipartRequest volleyMultipartRequest = new VolleyMultipartRequest(Request.Method.POST, url,
                 new Response.Listener<NetworkResponse>() {
                     @Override
                     public void onResponse(NetworkResponse response) {
                         String raw = new String(response.data);
-                        Log.d("UPLOAD_RAW", "Сырой ответ сервера: " + raw); // Для отладки
+                        Log.d("UPLOAD_RAW", "Сырой ответ сервера: " + raw);
 
                         try {
                             JSONObject obj = new JSONObject(raw);
@@ -119,7 +122,6 @@ public class UploadImgToServerActivity extends AppCompatActivity {
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
-                params.put("admin_cod", adminCod);
                 params.put("tags", tags);
                 return params;
             }

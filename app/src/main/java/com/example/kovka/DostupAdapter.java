@@ -37,7 +37,7 @@ public class DostupAdapter extends ArrayAdapter<JSONObject> {
             class_work.setText(usersList.get(position).getString("class_work"));
             prof.setText(usersList.get(position).getString("prof"));
             name.setText(usersList.get(position).getString("name"));
-            cod.setText(usersList.get(position).getString("cod"));
+            cod.setText("***");
         }catch (JSONException je){
             je.printStackTrace();
         }

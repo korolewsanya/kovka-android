@@ -5,6 +5,7 @@ public class ConfigSpinner {
         public static final String DATA_URL = Config.API_BASE + "dostupApp.php";
 
         //Теги, используемые в строке JSON
+        public static final String TAG_ID = "id"; //Чтобы заработал метод getUserId в GiveTzActivity.java
         public static final String TAG_COD = "cod";
         public static final String TAG_CLASS_WORK = "class_work";
         public static final String TAG_SPEC = "prof";

@@ -3,6 +3,7 @@ package com.example.kovka;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -37,6 +38,7 @@ public class SaveImgActivity extends AppCompatActivity {
         setContentView(R.layout.activity_save_img);
 
         adminCod = getIntent().getStringExtra("cod");
+        Log.d("SAVE_IMG", "onCreate: adminCod = " + adminCod);
 
         izdelieEditText = findViewById(R.id.izdelie);
         fileEditText = findViewById(R.id.file);
@@ -77,9 +79,13 @@ public class SaveImgActivity extends AppCompatActivity {
     private void saveToDatabase(String izdelie, String fileName, String tableName) {
         String url = Config.URL_CREATE + "create_izdelieApp.php";
 
+        Log.d("SAVE_IMG", "saveToDatabase: url = " + url);
+        Log.d("SAVE_IMG", "saveToDatabase: adminCod = " + adminCod);
+
         RequestQueue queue = Volley.newRequestQueue(this);
         StringRequest request = new StringRequest(Request.Method.POST, url,
                 response -> {
+                    Log.d("SAVE_IMG", "RESPONSE = " + response);
                     try {
                         JSONObject obj = new JSONObject(response);
                         if (!obj.getBoolean("error")) {
@@ -96,7 +102,10 @@ public class SaveImgActivity extends AppCompatActivity {
                         Toast.makeText(SaveImgActivity.this, "Ошибка ответа сервера", Toast.LENGTH_SHORT).show();
                     }
                 },
-                error -> Toast.makeText(SaveImgActivity.this, "Ошибка соединения. Попробуйте позже.", Toast.LENGTH_SHORT).show()) {
+                error -> {
+                    Log.e("SAVE_IMG", "ERROR = " + error.toString());
+                    Toast.makeText(SaveImgActivity.this, "Ошибка соединения. Попробуйте позже.", Toast.LENGTH_SHORT).show();
+                }) {
 
             @Override
             public String getBodyContentType() {
@@ -106,7 +115,7 @@ public class SaveImgActivity extends AppCompatActivity {
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
-                params.put("admin_cod", adminCod); // <-- авторизация
+                params.put("cod", adminCod);
                 params.put("table", tableName);
                 params.put("izdelie", izdelie);
                 params.put("image", fileName);
@@ -114,6 +123,9 @@ public class SaveImgActivity extends AppCompatActivity {
                 params.put("shirina", "");
                 params.put("visota", "");
                 params.put("prise", "0");
+
+                Log.d("SAVE_IMG", "getParams: " + params.toString());
+
                 return params;
             }
         };
