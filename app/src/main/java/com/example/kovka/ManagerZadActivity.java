@@ -8,7 +8,7 @@ import android.view.View;
 
 public class ManagerZadActivity extends AppCompatActivity {
 
-    // ИЗМЕНЕНО: Добавлена переменная для хранения кода доступа
+    // Добавлена переменная для хранения кода доступа
     private String adminCod;
 
     @Override
@@ -16,12 +16,12 @@ public class ManagerZadActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manager_zad);
 
-        // ИЗМЕНЕНО: Получаем код доступа из Intent (он передается из AdminActivity)
+        // Получаем код доступа из Intent (он передается из AdminActivity)
         adminCod = getIntent().getStringExtra("cod");
     }
 
     public void zakaz(View view) {
-        Intent intent = new Intent(this, SelectAllImgFromServerActivity2.class);
+        Intent intent = new Intent(this, SelectAllImgFromServerActivity.class);
         intent.putExtra("manager", "manager");
         // ИЗМЕНЕНО: Передаем код доступа в следующую активити
         intent.putExtra("cod", adminCod);
@@ -39,7 +39,7 @@ public class ManagerZadActivity extends AppCompatActivity {
     public void mater(View view) {
         Intent intent = new Intent(this, MaterActivity.class);
         intent.putExtra("manager", "manager");
-        // ИЗМЕНЕНО: Передаем код доступа в следующую активити
+        // Передаем код доступа в следующую активити
         intent.putExtra("cod", adminCod);
         startActivity(intent);
     }
@@ -47,7 +47,7 @@ public class ManagerZadActivity extends AppCompatActivity {
     public void rashod(View view) {
         Intent intent = new Intent(this, RashodActivity.class);
         intent.putExtra("manager", "manager");
-        // ИЗМЕНЕНО: Передаем код доступа в следующую активити
+        // Передаем код доступа в следующую активити
         intent.putExtra("cod", adminCod);
         startActivity(intent);
     }

@@ -69,9 +69,18 @@ public class GiveTzActivity extends AppCompatActivity implements Spinner.OnItemS
                     @Override
                     public void onResponse(String response) {
                         Log.d("SPINNER_RAW", "Ответ сервера: " + response);
-                        JSONObject j = null;
                         try {
-                            j = new JSONObject(response);
+                            JSONObject j = new JSONObject(response);
+
+                            // ИЗМЕНЕНО: если сервер вернул error — показываем сообщение,
+                            // а не пытаемся распарсить отсутствующий массив "dostup"
+                            if (j.optBoolean("error")) {
+                                Toast.makeText(GiveTzActivity.this,
+                                        j.optString("message", "Ошибка данных"),
+                                        Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+
                             result = j.getJSONArray(ConfigSpinner.JSON_ARRAY);
                             getWorkers(result);
                         } catch (JSONException e) {
@@ -91,6 +100,7 @@ public class GiveTzActivity extends AppCompatActivity implements Spinner.OnItemS
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
                 params.put("admin_cod", adminCod);
+                Log.d("SPINNER_RAW", "Отправляю cod = [" + adminCod + "]");
                 return params;
             }
         };
@@ -99,6 +109,7 @@ public class GiveTzActivity extends AppCompatActivity implements Spinner.OnItemS
     }
 
     private void getWorkers(JSONArray j) {
+        workers.clear(); // ИЗМЕНЕНО: на случай повторной загрузки
         for (int i = 0; i < j.length(); i++) {
             try {
                 JSONObject json = j.getJSONObject(i);
@@ -137,14 +148,22 @@ public class GiveTzActivity extends AppCompatActivity implements Spinner.OnItemS
     public void onItemSelected(AdapterView<?> adapterView, View view, int position, long l) {
         String item = (String) adapterView.getItemAtPosition(position);
         String[] worker = item.split("\\s*(\\s|,|!|:)\\s*");
-        prof = worker[0];
-        name = worker[1];
+        // ИЗМЕНЕНО: защита от неожиданного формата строки
+        if (worker.length >= 2) {
+            prof = worker[0];
+            name = worker[1];
+        } else if (worker.length == 1) {
+            prof = worker[0];
+            name = "";
+        } else {
+            prof = "";
+            name = "";
+        }
 
-        // ИЗМЕНЕНО: Используем getUserId вместо getCod
         cd.setText(getUserId(position));
         cw.setText(getClass_work(position));
 
-        cod = cd.getText().toString(); // Теперь здесь лежит ID (число), а не код доступа
+        cod = cd.getText().toString(); // Здесь лежит ID (число), а не код доступа
         class_work = cw.getText().toString();
     }
 
@@ -163,19 +182,27 @@ public class GiveTzActivity extends AppCompatActivity implements Spinner.OnItemS
                     @Override
                     public void onResponse(String response) {
                         Log.e("TAG", "RESPONSE IS " + response);
+                        boolean success = false;
+                        String message = "Ошибка отправки";
                         try {
                             JSONObject jsonObject = new JSONObject(response);
-                            Toast toast = Toast.makeText(GiveTzActivity.this, "Тех.задание успешно отправлено", Toast.LENGTH_LONG);
-                            toast.setGravity(Gravity.CENTER, 0, 0);
-                            toast.show();
+                            success = !jsonObject.optBoolean("error", true);
+                            message = jsonObject.optString("message",
+                                    success ? "Тех.задание успешно отправлено" : "Ошибка отправки");
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
 
-                        Intent intent = new Intent(GiveTzActivity.this, AdminActivity.class);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                        intent.putExtra("cod", adminCod);
-                        startActivity(intent);
+                        Toast toast = Toast.makeText(GiveTzActivity.this, message, Toast.LENGTH_LONG);
+                        toast.setGravity(Gravity.CENTER, 0, 0);
+                        toast.show();
+
+                        // ИЗМЕНЕНО: возвращаемся только при успехе,
+                        // иначе пользователь остаётся на форме, чтобы исправить данные.
+                        if (success) {
+                            setResult(RESULT_OK);
+                            finish();
+                        }
                     }
                 },
                 new com.android.volley.Response.ErrorListener() {
@@ -206,8 +233,20 @@ public class GiveTzActivity extends AppCompatActivity implements Spinner.OnItemS
     }
 
     public void onMyButtonClick(View view) {
-        String tz1 = tz.getText().toString();
-        String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", new Locale("ru")).format(Calendar.getInstance().getTime());
+        String tz1 = tz.getText().toString().trim();
+
+        // ИЗМЕНЕНО: базовая валидация перед отправкой
+        if (tz1.isEmpty()) {
+            Toast.makeText(this, "Введите текст тех.задания", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (cod == null || cod.isEmpty()) {
+            Toast.makeText(this, "Выберите сотрудника", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", new Locale("ru"))
+                .format(Calendar.getInstance().getTime());
 
         addDataToDatabase(tz1, date, cod, prof, class_work, name);
     }

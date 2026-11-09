@@ -2,7 +2,8 @@ package com.example.kovka;
 
 public class Config {
     // Базовый URL (меняешь здесь один раз)
-    private static final String BASE_URL = "https://kovka-test1.itsanek.ru/";
+    //private static final String BASE_URL = "https://kovka-test1.itsanek.ru/";
+    private static final String BASE_URL = "http://192.168.1.156/Kovka_git/kovka/";
 
     // Составные пути
     public static final String API_BASE = BASE_URL + "Kovka_CRM_Api/";
@@ -15,7 +16,7 @@ public class Config {
     public static final String URL_DELETE = API_BASE + "delete/";
 
 
-    // Если нужно для других классов
+    //для других классов
     public static String getImageUrl(String filename) {
         return IMG_BASE + filename;
     }

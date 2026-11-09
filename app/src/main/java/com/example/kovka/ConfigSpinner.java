@@ -1,8 +1,8 @@
 package com.example.kovka;
 
 public class ConfigSpinner {
-        // ИЗМЕНЕНО: Теперь список сотрудников берется из dostupApp.php (защищенного)
-        public static final String DATA_URL = Config.API_BASE + "dostupApp.php";
+        // ИЗМЕНЕНО: Теперь список сотрудников берется из get_workers.php
+        public static final String DATA_URL = Config.API_BASE + "get_workers.php";
 
         //Теги, используемые в строке JSON
         public static final String TAG_ID = "id"; //Чтобы заработал метод getUserId в GiveTzActivity.java

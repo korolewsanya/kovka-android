@@ -27,10 +27,26 @@
             android:paddingRight="10dp"
             android:text="Выберите изображение" />
 
+        <!-- ИЗМЕНЕНО: ограничение высоты превью, чтобы картинка не растягивала экран -->
         <ImageView
             android:id="@+id/imageView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="240dp"
+            android:layout_marginLeft="14dp"
+            android:layout_marginRight="14dp"
+            android:scaleType="centerInside"
+            android:adjustViewBounds="true" />
+
+        <!-- ИЗМЕНЕНО: отдельная кнопка отправки на сервер -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/buttonSendImage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/zakaz"
+            android:layout_margin="14dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="Загрузить на сервер" />
 
     </LinearLayout>
 </RelativeLayout>

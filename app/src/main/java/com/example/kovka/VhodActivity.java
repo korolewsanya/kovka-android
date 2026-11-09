@@ -119,8 +119,6 @@ public class VhodActivity extends AppCompatActivity {
                                     intent = new Intent(VhodActivity.this, DizActivity.class);
                                     break;
                                 case 4:
-                                    intent = new Intent(VhodActivity.this, MenedgerActivity.class);
-                                    break;
                                 case 3:
                                 case 5:
                                 case 6:

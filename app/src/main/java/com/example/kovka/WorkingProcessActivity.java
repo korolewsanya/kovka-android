@@ -53,6 +53,14 @@ public class WorkingProcessActivity extends AppCompatActivity {
 
         listView = findViewById(R.id.listView);
         progressBar = findViewById(R.id.progressBar);
+        // ИЗМЕНЕНО: загрузка перенесена в onResume — чтобы список обновлялся
+        // каждый раз при возврате (например, после создания ТЗ).
+    }
+
+    // ИЗМЕНЕНО: перезагружаем список каждый раз при возврате в активити
+    @Override
+    protected void onResume() {
+        super.onResume();
         loadJSONFromURL(JSON_URL);
     }
 
@@ -269,7 +277,7 @@ public class WorkingProcessActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.give_tz) {
             Intent intent = new Intent(this, GiveTzActivity.class);
-            intent.putExtra("admin_cod", adminCod); // <-- ЭТО ДОЛЖНО БЫТЬ!
+            intent.putExtra("admin_cod", adminCod);
             startActivity(intent);
             return true;
         }

@@ -19,9 +19,6 @@
             android:name=".SaveImgActivity"
             android:exported="false" />
         <activity
-            android:name=".SelectAllImgFromServerActivity2"
-            android:exported="false" />
-        <activity
             android:name=".SelectAllImgFromServerActivity"
             android:exported="false" />
         <activity

@@ -25,7 +25,6 @@ public class VolleyMultipartRequest extends Request<NetworkResponse> {
     private Response.ErrorListener mErrorListener;
     private Map<String, String> mHeaders;
 
-
     public VolleyMultipartRequest(int method, String url,
                                   Response.Listener<NetworkResponse> listener,
                                   Response.ErrorListener errorListener) {
@@ -39,9 +38,10 @@ public class VolleyMultipartRequest extends Request<NetworkResponse> {
         return (mHeaders != null) ? mHeaders : super.getHeaders();
     }
 
+    //: пробел после "; " — обязателен по RFC, некоторые серверы без него ломаются
     @Override
     public String getBodyContentType() {
-        return "multipart/form-data;boundary=" + boundary;
+        return "multipart/form-data; boundary=" + boundary;
     }
 
     @Override
@@ -50,19 +50,16 @@ public class VolleyMultipartRequest extends Request<NetworkResponse> {
         DataOutputStream dos = new DataOutputStream(bos);
 
         try {
-            // заполнить текстовую полезную нагрузку
             Map<String, String> params = getParams();
             if (params != null && params.size() > 0) {
                 textParse(dos, params, getParamsEncoding());
             }
 
-            //заполнить полезную нагрузку байта данных
             Map<String, DataPart> data = getByteData();
             if (data != null && data.size() > 0) {
                 dataParse(dos, data);
             }
 
-            // закрывать данные многочастной формы после текстовых и файловых данных
             dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
 
             return bos.toByteArray();
@@ -72,11 +69,6 @@ public class VolleyMultipartRequest extends Request<NetworkResponse> {
         return null;
     }
 
-    /**
-     * Пользовательский метод обрабатывает полезные данные.
-     * @return Метка части данных карты с байтом данных
-     * @throws AuthFailureError
-     */
     protected Map<String, DataPart> getByteData() throws AuthFailureError {
         return null;
     }
@@ -102,13 +94,6 @@ public class VolleyMultipartRequest extends Request<NetworkResponse> {
         mErrorListener.onErrorResponse(error);
     }
 
-    /**
-     * Разбор карты строк в поток вывода данных по ключу и значению.
-     * @param dataOutputStream поток вывода данных обрабатывает синтаксический анализ строки
-     * @param params коллекция строковых входов
-     * Кодировка @param кодирует входные данные, по умолчанию UTF-8.
-     * @выбрасывает исключение IOException
-     */
     private void textParse(DataOutputStream dataOutputStream, Map<String, String> params, String encoding) throws IOException {
         try {
             for (Map.Entry<String, String> entry : params.entrySet()) {
@@ -119,68 +104,40 @@ public class VolleyMultipartRequest extends Request<NetworkResponse> {
         }
     }
 
-    /**
-     * Анализ данных в поток вывода данных.
-     * @param dataOutputStream дескриптор потока вывода данных, вложение файла
-     * @param data циклически перебирает данные
-     * @выбрасывает исключение IOException
-     */
     private void dataParse(DataOutputStream dataOutputStream, Map<String, DataPart> data) throws IOException {
         for (Map.Entry<String, DataPart> entry : data.entrySet()) {
             buildDataPart(dataOutputStream, entry.getValue(), entry.getKey());
         }
     }
 
-    /**
-     * Запишите строковые данные в заголовок и поток вывода данных.
-     * @param dataOutputStream дескриптор потока вывода данных, синтаксический анализ строки
-     * @param parameterName    name of input
-     * @param parameterValue   value of input
-     * @throws IOException
-     */
     private void buildTextPart(DataOutputStream dataOutputStream, String parameterName, String parameterValue) throws IOException {
         dataOutputStream.writeBytes(twoHyphens + boundary + lineEnd);
         dataOutputStream.writeBytes("Content-Disposition: form-data; name=\"" + parameterName + "\"" + lineEnd);
         dataOutputStream.writeBytes(lineEnd);
-        //dataOutputStream.writeBytes(parameterValue + lineEnd);
-        //вместо этой строки пишем следующие две для вывода русских букв в таблицу
         dataOutputStream.write(parameterValue.getBytes("utf-8"));
         dataOutputStream.writeBytes(lineEnd);
     }
 
-    /**
-     * Запишите файл данных в заголовок и поток вывода данных.
-     *
-     * @param dataOutputStream data output stream handle data parsing
-     * @param dataFile         data byte as DataPart from collection
-     * @param inputName        name of data input
-     * @throws IOException
-     */
     private void buildDataPart(DataOutputStream dataOutputStream, DataPart dataFile, String inputName) throws IOException {
         dataOutputStream.writeBytes(twoHyphens + boundary + lineEnd);
         dataOutputStream.writeBytes("Content-Disposition: form-data; name=\"" +
                 inputName + "\"; filename=\"" + dataFile.getFileName() + "\"" + lineEnd);
-        if (dataFile.getType() != null && !dataFile.getType().trim().isEmpty()) {
-            dataOutputStream.writeBytes("Content-Type:" + dataFile.getType() + lineEnd);
+
+        //  в пишем Content-Type, если он не задан — ставим application/octet-stream
+        String type = dataFile.getType();
+        if (type == null || type.trim().isEmpty()) {
+            type = "application/octet-stream";
         }
+        dataOutputStream.writeBytes("Content-Type: " + type + lineEnd);
         dataOutputStream.writeBytes(lineEnd);
 
+        //  читаем-пишем порциями, пишем РОВНО bytesRead, а не длину буфера
         ByteArrayInputStream fileInputStream = new ByteArrayInputStream(dataFile.getContent());
-        int bytesAvailable = fileInputStream.available();
-
-        int maxBufferSize = 1024 * 1024;
-        int bufferSize = Math.min(bytesAvailable, maxBufferSize);
-        byte[] buffer = new byte[bufferSize];
-
-        int bytesRead = fileInputStream.read(buffer, 0, bufferSize);
-
-        while (bytesRead > 0) {
-            dataOutputStream.write(buffer, 0, bufferSize);
-            bytesAvailable = fileInputStream.available();
-            bufferSize = Math.min(bytesAvailable, maxBufferSize);
-            bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+        byte[] buffer = new byte[1024 * 1024];
+        int bytesRead;
+        while ((bytesRead = fileInputStream.read(buffer)) > 0) {
+            dataOutputStream.write(buffer, 0, bytesRead);
         }
-
         dataOutputStream.writeBytes(lineEnd);
     }
 
@@ -192,9 +149,17 @@ public class VolleyMultipartRequest extends Request<NetworkResponse> {
         public DataPart() {
         }
 
+        // ИЗМЕНЕНО: добавлен конструктор с типом
         DataPart(String name, byte[] data) {
             fileName = name;
             content = data;
+            type = "application/octet-stream";
+        }
+
+        DataPart(String name, byte[] data, String mimeType) {
+            fileName = name;
+            content = data;
+            type = mimeType;
         }
 
         String getFileName() {
@@ -210,5 +175,3 @@ public class VolleyMultipartRequest extends Request<NetworkResponse> {
         }
     }
 }
-
-

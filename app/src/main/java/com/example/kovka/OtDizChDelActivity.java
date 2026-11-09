@@ -61,7 +61,7 @@ public class OtDizChDelActivity extends AppCompatActivity {
 
         // Загружаем фото
         if (imageName != null && !imageName.isEmpty() && !imageName.equals("нет изображения")) {
-            String imageUrl = "https://kovka-test1.itsanek.ru/img/" + imageName;
+            String imageUrl = Config.IMG_BASE + imageName;
             Glide.with(this)
                     .load(imageUrl)
                     .placeholder(null)

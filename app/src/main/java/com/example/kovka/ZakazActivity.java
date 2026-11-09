@@ -182,7 +182,7 @@ public class ZakazActivity extends AppCompatActivity {
                         Log.e("TAG", "RESPONSE IS " + response);
                         try {
                             JSONObject jsonObject = new JSONObject(response);
-                            Toast toast = Toast.makeText(ZakazActivity.this, "Заказ добавлен", Toast.LENGTH_LONG);
+                            Toast toast = Toast.makeText(ZakazActivity.this, "Заказ выбран", Toast.LENGTH_LONG);
                             toast.setGravity(Gravity.CENTER, 0, 0);
                             toast.show();
                         } catch (JSONException e) {
