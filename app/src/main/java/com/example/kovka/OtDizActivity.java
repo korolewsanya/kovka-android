@@ -2,6 +2,7 @@ package com.example.kovka;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListAdapter;
@@ -28,6 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class OtDizActivity extends AppCompatActivity {
+    private static final String TAG = "OT_DIZ_DEBUG";
     private static final String URL = Config.API_BASE + "ot_dizApp.php";
     ListView listView;
     ArrayList<JSONObject> infoList;
@@ -38,8 +40,13 @@ public class OtDizActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ot_diz);
 
+        Log.e(TAG, "=== OtDizActivity onCreate ===");
+
         adminCod = getIntent().getStringExtra("cod");
+        Log.e(TAG, "Получен cod = [" + adminCod + "]");
+
         if (adminCod == null) {
+            Log.e(TAG, "ОШИБКА: cod = null");
             Toast.makeText(this, "Ошибка: код доступа не передан", Toast.LENGTH_SHORT).show();
             finish();
             return;
@@ -73,6 +80,8 @@ public class OtDizActivity extends AppCompatActivity {
     }
 
     private void loadJSONFromURL(String url) {
+        Log.e(TAG, "loadJSONFromURL: URL=" + url + ", cod=[" + adminCod + "]");
+
         final ProgressBar progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(ListView.VISIBLE);
 
@@ -81,15 +90,45 @@ public class OtDizActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(String response) {
                         progressBar.setVisibility(View.INVISIBLE);
+                        Log.e(TAG, "!!! ОТВЕТ СЕРВЕРА: " + response);
+
                         try {
                             JSONObject object = new JSONObject(response);
+
+                            if (object.has("error") && object.getBoolean("error")) {
+                                String msg = object.optString("message", "Unknown error");
+                                Log.e(TAG, "Сервер вернул ошибку: " + msg);
+                                Toast.makeText(getApplicationContext(), "Ошибка сервера: " + msg, Toast.LENGTH_LONG).show();
+                                return;
+                            }
+
                             JSONArray jsonArray = object.getJSONArray("ot_diz");
+                            Log.e(TAG, "Количество отчетов в JSON: " + jsonArray.length());
+
+                            if (jsonArray.length() == 0) {
+                                Log.e(TAG, "ВНИМАНИЕ: Массив отчетов пустой!");
+                                Toast.makeText(getApplicationContext(), "Отчетов нет", Toast.LENGTH_SHORT).show();
+                            }
+
                             ArrayList<JSONObject> listItems = getArrayListFromJSONArray(jsonArray);
                             infoList = listItems;
+
+                            Log.e(TAG, "listItems размер: " + listItems.size());
+
+                            if (listItems.isEmpty()) {
+                                Log.e(TAG, "СПИСОК ПУСТ. Адаптер не устанавливаем.");
+                                return;
+                            }
+
                             ListAdapter adapter = new OtAdapter(getApplicationContext(), R.layout.row_new_zakaz, R.id.nomer, listItems);
                             listView.setAdapter(adapter);
+
+                            Log.e(TAG, "Адаптер установлен. Количество элементов: " + adapter.getCount());
+
                         } catch (JSONException e) {
+                            Log.e(TAG, "ОШИБКА РАЗБОРА JSON: " + e.getMessage());
                             e.printStackTrace();
+                            Toast.makeText(getApplicationContext(), "Ошибка парсинга JSON", Toast.LENGTH_LONG).show();
                         }
                     }
                 },
@@ -97,13 +136,25 @@ public class OtDizActivity extends AppCompatActivity {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         progressBar.setVisibility(View.INVISIBLE);
-                        Toast.makeText(getApplicationContext(), "Ошибка соединения. Попробуйте позже.", Toast.LENGTH_SHORT).show();
+                        Log.e(TAG, "!!! ОШИБКА VOLLEY: " + error.toString());
+
+                        if (error.networkResponse != null) {
+                            Log.e(TAG, "HTTP код ошибки: " + error.networkResponse.statusCode);
+                            try {
+                                String body = new String(error.networkResponse.data, "UTF-8");
+                                Log.e(TAG, "Тело ответа с ошибкой: " + body);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        Toast.makeText(getApplicationContext(), "Ошибка сети. Проверьте интернет.", Toast.LENGTH_LONG).show();
                     }
                 }) {
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
                 params.put("cod", adminCod);
+                Log.e(TAG, "getParams: " + params.toString());
                 return params;
             }
         };

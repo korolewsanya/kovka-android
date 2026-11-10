@@ -17,27 +17,34 @@ public class OtAdapter extends ArrayAdapter<JSONObject> {
     ArrayList<JSONObject> usersList;
     Context context;
 
-    public  OtAdapter(Context context, int listLayout , int field, ArrayList<JSONObject> usersList) {
+    public OtAdapter(Context context, int listLayout, int field, ArrayList<JSONObject> usersList) {
         super(context, listLayout, field, usersList);
         this.context = context;
-        this.listLayout=listLayout;
+        this.listLayout = listLayout;
         this.usersList = usersList;
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View listViewItem = inflater.inflate(listLayout, null, false);
+        View listViewItem = convertView;
+        if (listViewItem == null) {
+            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            listViewItem = inflater.inflate(listLayout, parent, false);
+        }
+
         TextView nomer = listViewItem.findViewById(R.id.nomer);
         TextView zakaz = listViewItem.findViewById(R.id.zakaz);
         TextView time = listViewItem.findViewById(R.id.time);
-        try{
+
+        try {
             nomer.setText(usersList.get(position).getString("id"));
-            zakaz.setText(usersList.get(position).getString("otchet"));
+            // В таблице otchet поле называется "otchet", но если его нет — покажем пустую строку
+            zakaz.setText(usersList.get(position).optString("otchet", ""));
             time.setText(usersList.get(position).getString("date"));
-        }catch (JSONException je){
+        } catch (JSONException je) {
             je.printStackTrace();
         }
+
         return listViewItem;
     }
 }

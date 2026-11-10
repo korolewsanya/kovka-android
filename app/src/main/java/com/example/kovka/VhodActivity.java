@@ -62,7 +62,6 @@ public class VhodActivity extends AppCompatActivity {
     }
 
     public void vhod(View view) {
-        // Проверка чекбокса согласия
         CheckBox cbAgree = findViewById(R.id.cbAgree);
         if (!cbAgree.isChecked()) {
             textView.setText("!!!   Необходимо согласие с политикой конфиденциальности   !!!");
@@ -98,7 +97,14 @@ public class VhodActivity extends AppCompatActivity {
                             boolean success = json.optBoolean("success", false);
 
                             if (!success) {
-                                textView.setText("!!!   Код доступа введён не верно   !!!");
+                                // Проверяем, не заблокирован ли пользователь
+                                String errorType = json.optString("error", "");
+                                if ("too_many_attempts".equals(errorType)) {
+                                    String msg = json.optString("message", "Слишком много попыток");
+                                    textView.setText("!!!   " + msg + "   !!!");
+                                } else {
+                                    textView.setText("!!!   Код доступа введён не верно   !!!");
+                                }
                                 textView.setTextColor(Color.RED);
                                 return;
                             }
@@ -107,7 +113,6 @@ public class VhodActivity extends AppCompatActivity {
                             int classWork = user.getInt("class_work");
                             String prof = user.optString("prof", "");
 
-                            // Логируем вход через cod.php (как было)
                             addDataToDatabase(cod);
 
                             Intent intent;

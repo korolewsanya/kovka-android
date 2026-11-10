@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DizActivity extends AppCompatActivity {
+    private static final String TAG = "DIZ_DEBUG";
     private static final String JSON_URL = Config.API_BASE + "dizApp.php";
     ListView listView;
     ArrayList<JSONObject> infoList;
@@ -41,9 +42,14 @@ public class DizActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_diz);
 
+        Log.e(TAG, "=== DizActivity onCreate ===");
+
         // Безопасное получение кода
         cod = getIntent().getStringExtra("cod");
+        Log.e(TAG, "Получен cod = [" + cod + "]");
+
         if (cod == null) {
+            Log.e(TAG, "ОШИБКА: cod = null");
             Toast.makeText(this, "Ошибка: код доступа не передан", Toast.LENGTH_SHORT).show();
             finish();
             return;
@@ -74,6 +80,8 @@ public class DizActivity extends AppCompatActivity {
     }
 
     private void loadJSONFromURL(String url) {
+        Log.e(TAG, "loadJSONFromURL: URL=" + url + ", cod=[" + cod + "]");
+
         final ProgressBar progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(ListView.VISIBLE);
 
@@ -82,15 +90,46 @@ public class DizActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(String response) {
                         progressBar.setVisibility(View.INVISIBLE);
+                        Log.e(TAG, "!!! ОТВЕТ СЕРВЕРА: " + response);
+
                         try {
                             JSONObject object = new JSONObject(response);
+
+                            // Проверка на ошибку
+                            if (object.has("error") && object.getBoolean("error")) {
+                                String msg = object.optString("message", "Unknown error");
+                                Log.e(TAG, "Сервер вернул ошибку: " + msg);
+                                Toast.makeText(getApplicationContext(), "Ошибка сервера: " + msg, Toast.LENGTH_LONG).show();
+                                return;
+                            }
+
                             JSONArray jsonArray = object.getJSONArray("tz");
+                            Log.e(TAG, "Количество ТЗ в JSON: " + jsonArray.length());
+
+                            if (jsonArray.length() == 0) {
+                                Log.e(TAG, "ВНИМАНИЕ: Массив ТЗ пустой!");
+                                Toast.makeText(getApplicationContext(), "ТЗ нет", Toast.LENGTH_SHORT).show();
+                            }
+
                             ArrayList<JSONObject> listItems = getArrayListFromJSONArray(jsonArray);
                             infoList = listItems;
+
+                            Log.e(TAG, "listItems размер: " + listItems.size());
+
+                            if (listItems.isEmpty()) {
+                                Log.e(TAG, "СПИСОК ПУСТ. Адаптер не устанавливаем.");
+                                return;
+                            }
+
                             ListAdapter adapter = new TzAdapter(getApplicationContext(), R.layout.row_new_zakaz, R.id.nomer, listItems);
                             listView.setAdapter(adapter);
+
+                            Log.e(TAG, "Адаптер установлен. Количество элементов: " + adapter.getCount());
+
                         } catch (JSONException e) {
+                            Log.e(TAG, "ОШИБКА РАЗБОРА JSON: " + e.getMessage());
                             e.printStackTrace();
+                            Toast.makeText(getApplicationContext(), "Ошибка парсинга JSON", Toast.LENGTH_LONG).show();
                         }
                     }
                 },
@@ -98,13 +137,25 @@ public class DizActivity extends AppCompatActivity {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         progressBar.setVisibility(View.INVISIBLE);
-                        Toast.makeText(getApplicationContext(), "Ошибка соединения. Попробуйте позже.", Toast.LENGTH_SHORT).show();
+                        Log.e(TAG, "!!! ОШИБКА VOLLEY: " + error.toString());
+
+                        if (error.networkResponse != null) {
+                            Log.e(TAG, "HTTP код ошибки: " + error.networkResponse.statusCode);
+                            try {
+                                String body = new String(error.networkResponse.data, "UTF-8");
+                                Log.e(TAG, "Тело ответа с ошибкой: " + body);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        Toast.makeText(getApplicationContext(), "Ошибка сети. Проверьте интернет.", Toast.LENGTH_LONG).show();
                     }
                 }) {
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
                 params.put("cod", cod);
+                Log.e(TAG, "getParams: " + params.toString());
                 return params;
             }
         };
@@ -138,6 +189,7 @@ public class DizActivity extends AppCompatActivity {
 
         switch (id) {
             case R.id.ot:
+                Log.e(TAG, "Нажата кнопка Отчеты. Передаем cod = [" + cod + "]");
                 Intent intent = new Intent(this, OtDizActivity.class);
                 intent.putExtra("cod", cod);
                 addDataToDatabase(cod);
@@ -146,21 +198,18 @@ public class DizActivity extends AppCompatActivity {
 
             case R.id.zakaz:
                 Intent intent2 = new Intent(this, ZakazForDizActivity.class);
-                // ИЗМЕНЕНО: Передаем код доступа
                 intent2.putExtra("cod", cod);
                 startActivity(intent2);
                 return true;
 
             case R.id.img:
                 Intent intent3 = new Intent(this, UploadImgToServerActivity.class);
-                // ИЗМЕНЕНО: Передаем код доступа (в UploadImgToServerActivity мы получаем его как "cod")
                 intent3.putExtra("cod", cod);
                 startActivity(intent3);
                 return true;
 
             case R.id.zad:
                 Intent intent4 = new Intent(this, ManagerZadActivity.class);
-                // ИЗМЕНЕНО: Передаем код доступа
                 intent4.putExtra("cod", cod);
                 startActivity(intent4);
                 return true;
@@ -168,7 +217,6 @@ public class DizActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    // Метод для добавления в БД cod
     private void addDataToDatabase(String cod1) {
         String url = Config.API_BASE + "cod.php";
         RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
